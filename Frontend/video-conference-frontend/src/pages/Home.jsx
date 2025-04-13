@@ -67,7 +67,7 @@ const Home = () => {
         </div>
       </section>
 
-            {/* Features Section */}
+        {/* Features Section */}
         <section className="bg-white dark:bg-gray-800 py-20">
         <div className="container mx-auto px-4">
         <h2 className="text-3xl font-bold text-center mb-4 dark:text-white">Why Choose MeetNow?</h2>
