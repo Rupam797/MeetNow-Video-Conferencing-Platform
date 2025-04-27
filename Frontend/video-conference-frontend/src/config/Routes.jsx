@@ -4,6 +4,9 @@ import App from '../App'
 import Signup from '../auth/Signup'
 import Login from '../auth/Login'
 import Dashboard from '../pages/Dashboard'
+import MeetingLobby from '../pages/MeetingLobby'
+import MeetingRoom from '../pages/MeetingRoom'
+
 
 const AppRoutes = () => {
   return (
@@ -12,8 +15,10 @@ const AppRoutes = () => {
         <Route path='/Signup' element={<Signup/>} />
         <Route path='/Login' element={<Login/>} />
         <Route path='/Dashboard' element={<Dashboard/>} />
+        <Route path='/Meetinglobby' element={<MeetingLobby/>} />
+        <Route path='/Meetingroom' element={<MeetingRoom/>} />
         
-        <Route path='/about' element={<h1>This is chat about</h1>} />
+    
        </Routes>
   )
 }

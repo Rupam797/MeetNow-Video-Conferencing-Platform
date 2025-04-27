@@ -10,19 +10,37 @@ import {
   CardTitle,
 } from "../ui/card";
 import Input from "../ui/Input";
+import { useNavigate } from "react-router";
 
 export default function Dashboard({ user, onCreateMeeting, onLogout }) {
   const [meetingCode, setMeetingCode] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [userName, setUserName] = useState("");
   const dropdownRef = useRef(null);
+  const navigate = useNavigate();
 
   const handleJoinMeeting = (e) => {
     e.preventDefault();
-    console.log("Joining meeting with code:", meetingCode);
-    // Add join meeting logic here
+    if (meetingCode.trim() && userName.trim()) {
+      navigate("/MeetingLobby", { 
+        state: { 
+          userName,
+          meetingCode 
+        } 
+      });
+    }
   };
 
-  // Close dropdown when clicking outside
+  const handleStartMeeting = () => {
+    if (userName.trim()) {
+      navigate("/MeetingLobby", { 
+        state: { 
+          userName 
+        } 
+      });
+    }
+  };
+
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -46,7 +64,6 @@ export default function Dashboard({ user, onCreateMeeting, onLogout }) {
 
           <div className="flex items-center space-x-4">
             <ThemeToggle />
-            {/* Profile Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -75,7 +92,6 @@ export default function Dashboard({ user, onCreateMeeting, onLogout }) {
 
       <main className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4">
         <div className="container mx-auto">
-          {/* Welcome Section */}
           <div className="flex flex-col items-center mb-12">
             <div className="relative mb-6">
               <h1 className="text-4xl md:text-5xl font-bold text-center mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
@@ -89,7 +105,6 @@ export default function Dashboard({ user, onCreateMeeting, onLogout }) {
             </p>
           </div>
 
-          {/* Two Column Layout */}
           <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {/* Start Meeting Card */}
             <Card className="bg-white dark:bg-gray-800 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-0 shadow-lg overflow-hidden">
@@ -106,12 +121,22 @@ export default function Dashboard({ user, onCreateMeeting, onLogout }) {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button
-                  onClick={onCreateMeeting}
-                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all duration-300"
-                >
-                  New Meeting
-                </Button>
+                <div className="space-y-4">
+                  <Input
+                    type="text"
+                    placeholder="Enter your name"
+                    value={userName}
+                    onChange={(e) => setUserName(e.target.value)}
+                    className="w-full border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent"
+                  />
+                  <Button
+                    onClick={handleStartMeeting}
+                    disabled={!userName.trim()}
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all duration-300"
+                  >
+                    New Meeting
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
@@ -138,10 +163,17 @@ export default function Dashboard({ user, onCreateMeeting, onLogout }) {
                     onChange={(e) => setMeetingCode(e.target.value)}
                     className="w-full border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent"
                   />
+                  <Input
+                    type="text"
+                    placeholder="Enter your name"
+                    value={userName}
+                    onChange={(e) => setUserName(e.target.value)}
+                    className="w-full border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent"
+                  />
                   <Button
                     type="submit"
                     className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all duration-300"
-                    disabled={!meetingCode.trim()}
+                    disabled={!meetingCode.trim() || !userName.trim()}
                   >
                     Join Meeting
                   </Button>
