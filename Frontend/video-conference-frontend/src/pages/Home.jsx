@@ -7,6 +7,7 @@ import { Check } from 'lucide-react';
 import { Star } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
+import MainLayout from '../layouts/MainLayout';
 
 // Animation variants
 const containerVariants = {
@@ -87,11 +88,11 @@ const Home = () => {
           transition={{ duration: 0.5 }}
           className="flex items-center space-x-4"
         >
-          <Link to="/login">
+          {/* <Link to="/login">
             <Button variant="ghost">Login</Button>
-          </Link>
-          <Link to="/signup">
-            <Button>Sign Up</Button>
+          </Link> */}
+          <Link to="/login">
+            <Button>Login<ArrowRight className="ml-2 h-5 w-5" /></Button>
           </Link>
           <ThemeToggle />
         </motion.div>
@@ -482,12 +483,12 @@ const Home = () => {
               viewport={{ once: true }}
               className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4"
             >
-              <Link href="/signup">
+              <Link to="/signup">
                 <Button size="lg" variant="default" className="bg-white text-blue-600 hover:bg-gray-100">
                   Sign Up Free
                 </Button>
               </Link>
-              <Link href="/contact">
+              <Link to="/contact">
                 <Button size="lg" variant="outline" className="text-white border-white hover:bg-blue-700">
                   Contact Sales
                 </Button>
@@ -593,4 +594,10 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default function HomePage() {
+  return (
+    <MainLayout>
+      <Home />
+    </MainLayout>
+  );
+}

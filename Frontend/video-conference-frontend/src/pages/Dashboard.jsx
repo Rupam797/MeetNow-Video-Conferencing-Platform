@@ -19,24 +19,42 @@ export default function Dashboard({ user, onCreateMeeting, onLogout }) {
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
+  // Function to generate a random 8-character alphanumeric meeting code
+  const generateMeetingCode = () => {
+    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let code = "";
+    for (let i = 0; i < 8; i++) {
+      code += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return code;
+  };
+
   const handleJoinMeeting = (e) => {
     e.preventDefault();
     if (meetingCode.trim() && userName.trim()) {
-      navigate("/MeetingLobby", { 
-        state: { 
+      navigate("/MeetingLobby", {
+        state: {
           userName,
-          meetingCode 
-        } 
+          meetingCode,
+        },
       });
     }
   };
 
   const handleStartMeeting = () => {
     if (userName.trim()) {
-      navigate("/MeetingLobby", { 
-        state: { 
-          userName 
-        } 
+      const newMeetingCode = generateMeetingCode();
+
+      // Notify parent or backend (optional)
+      if (onCreateMeeting) {
+        onCreateMeeting(newMeetingCode);
+      }
+
+      navigate("/MeetingLobby", {
+        state: {
+          userName,
+          meetingCode: newMeetingCode,
+        },
       });
     }
   };
@@ -95,7 +113,7 @@ export default function Dashboard({ user, onCreateMeeting, onLogout }) {
           <div className="flex flex-col items-center mb-12">
             <div className="relative mb-6">
               <h1 className="text-4xl md:text-5xl font-bold text-center mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
-                Welcome, {user?.name || "User"}
+                Welcome, {user ? user.name : 'User'}
               </h1>
               <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"></div>
             </div>

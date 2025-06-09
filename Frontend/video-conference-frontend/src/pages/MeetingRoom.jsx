@@ -19,13 +19,14 @@ import {
   VideoOff,
   PhoneOff,
   Monitor,
-  MessageCircle,
+  MessageSquare,
+  MoreVertical,
+  User,
+  Settings,
+  Shield,
 } from "lucide-react";
 import ThemeToggle from "../components/ThemeToggle";
 import ChatPanel from "../components/ChatPanel";
-
-const iconButtonStyle =
-  "p-3 rounded-full text-white bg-gray-700 hover:bg-gray-600 dark:bg-gray-300 dark:text-black transition duration-300";
 
 const MeetingRoom = () => {
   const location = useLocation();
@@ -58,14 +59,16 @@ const MeetingContent = ({ userName, meetingCode, initialSettings }) => {
   const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState("");
   const [calling, setCalling] = useState(true);
+  const [participantsOpen, setParticipantsOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const isConnected = useIsConnected();
   const remoteUsers = useRemoteUsers();
   const screenTrackRef = useRef(null);
 
   const appId = "6c644d6152df412280e149a1dec55935";
-  const channel = meetingCode || "default-channel";
-  const token = "007eJxTYJhxvO34rFjDV3xnY41WKgVb3P22sL7FTmjL95bXHonemywUGMySzUxMUswMTY1S0kwMjYwsDFINTSwTDVNSk01NLY1ND1XyZDQEMjJM7HJjZmSAQBCflaEsMyU1n4EBAIEuH4U=";
+  const channel = "video";
+  const token = "007eJxTYMh4zd2TM4dH4/38U/zmU+7Fls1JqpkWMm17xD1llRvabPcVGMySzUxMUswMTY1S0kwMjYwsDFINTSwTDVNSk01NLY1Nl94VyWgIZGRY82gLMyMDBIL4rAxlmSmp+QwMADzhH5c=";
 
   useJoin({ appid: appId, channel, token, uid: userName }, calling);
 
@@ -132,99 +135,226 @@ const MeetingContent = ({ userName, meetingCode, initialSettings }) => {
     }
   }, [cameraOn, localCameraTrack]);
 
+  // Calculate grid layout based on number of participants
+  const totalParticipants = remoteUsers.length + 1; // +1 for local user
+  const getGridClass = () => {
+    if (totalParticipants <= 2) return "grid-cols-1";
+    if (totalParticipants <= 4) return "grid-cols-2";
+    if (totalParticipants <= 9) return "grid-cols-3";
+    return "grid-cols-4";
+  };
+
   return (
-    <div className="h-screen w-screen flex flex-col bg-gray-50 dark:bg-gray-900">
-      {/* Navbar */}
-      <nav className="w-full px-6 py-4 bg-white dark:bg-gray-800 shadow-md flex justify-between items-center">
-        <div className="flex items-center space-x-2">
-          <VideoIcon className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-          <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-            MeetNow {meetingCode && `- ${meetingCode}`}
-          </span>
+    <div className="h-screen w-screen flex flex-col bg-gray-100 dark:bg-gray-900">
+      {/* Top bar */}
+      <div className="w-full px-4 py-2 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <VideoIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            <span className="text-lg font-medium text-gray-800 dark:text-gray-200">
+              MeetNow
+            </span>
+          </div>
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            {meetingCode}
+          </div>
         </div>
-        <ThemeToggle />
-      </nav>
+        
+        <div className="flex items-center space-x-4">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </div>
+          <ThemeToggle />
+        </div>
+      </div>
 
       {/* Main content */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Video section */}
-        <div className="flex-1 flex flex-col p-4">
-          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <LocalUser
-              audioTrack={micOn ? localMicrophoneTrack : null}
-              cameraOn={cameraOn}
-              micOn={micOn}
-              playAudio={false}
-              videoTrack={cameraOn ? localCameraTrack : null}
-              style={{ width: "100%", height: "100%" }}
-            >
-              <span>{userName}</span>
-            </LocalUser>
+      <div className="flex-1 flex overflow-hidden">
+        {/* Video grid */}
+        <div className={`flex-1 p-4 overflow-auto ${chatOpen || participantsOpen ? 'w-3/4' : 'w-full'}`}>
+          <div className={`grid ${getGridClass()} gap-4 h-full`}>
+            <div className="relative bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden">
+              <LocalUser
+                audioTrack={micOn ? localMicrophoneTrack : null}
+                cameraOn={cameraOn}
+                micOn={micOn}
+                playAudio={false}
+                videoTrack={cameraOn ? localCameraTrack : null}
+                style={{ width: "100%", height: "100%" }}
+              />
+              <div className="absolute bottom-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-sm">
+                {userName} (You)
+              </div>
+              {!cameraOn && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
+                  <div className="w-16 h-16 rounded-full bg-gray-700 flex items-center justify-center">
+                    <User className="text-gray-400 h-8 w-8" />
+                  </div>
+                </div>
+              )}
+            </div>
 
             {remoteUsers.map(user => (
-              <RemoteUser
-                key={user.uid}
-                user={user}
-                style={{ width: "100%", height: "100%" }}
-              >
-                <span>{user.uid}</span>
-              </RemoteUser>
+              <div key={user.uid} className="relative bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden">
+                <RemoteUser
+                  user={user}
+                  style={{ width: "100%", height: "100%" }}
+                />
+                <div className="absolute bottom-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-sm">
+                  {user.uid}
+                </div>
+                {!user.hasVideo && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
+                    <div className="w-16 h-16 rounded-full bg-gray-700 flex items-center justify-center">
+                      <User className="text-gray-400 h-8 w-8" />
+                    </div>
+                  </div>
+                )}
+              </div>
             ))}
-          </div>
-
-          {/* Controls */}
-          <div className="mt-4 flex justify-center gap-4 text-xl">
-            <button
-              onClick={toggleMic}
-              title={micOn ? "Mute Microphone" : "Unmute Microphone"}
-              className={iconButtonStyle}
-            >
-              {micOn ? <Mic /> : <MicOff />}
-            </button>
-
-            <button
-              onClick={toggleCamera}
-              title={cameraOn ? "Turn Off Camera" : "Turn On Camera"}
-              className={iconButtonStyle}
-            >
-              {cameraOn ? <VideoIcon /> : <VideoOff />}
-            </button>
-
-            <button
-              onClick={startScreenShare}
-              title="Share Screen"
-              className={iconButtonStyle}
-            >
-              <Monitor />
-            </button>
-
-            <button
-              onClick={() => setChatOpen(prev => !prev)}
-              title="Toggle Chat"
-              className={iconButtonStyle}
-            >
-              <MessageCircle />
-            </button>
-
-            <button
-              onClick={leaveMeeting}
-              title="Leave Meeting"
-              className={`${iconButtonStyle} bg-red-500 hover:bg-red-600 dark:bg-red-400 dark:hover:bg-red-500`}
-            >
-              <PhoneOff />
-            </button>
           </div>
         </div>
 
-        {/* Chat section */}
-        {chatOpen && isConnected && (
-          <ChatPanel
-            messages={messages}
-            messageInput={messageInput}
-            setMessageInput={setMessageInput}
-            sendMessage={sendMessage}
-          />
+        {/* Right sidebar */}
+        {(chatOpen || participantsOpen) && (
+          <div className="w-1/4 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+              <h3 className="font-medium text-gray-800 dark:text-gray-200">
+                {participantsOpen ? 'Participants' : 'Chat'}
+              </h3>
+              <button 
+                onClick={() => {
+                  setChatOpen(false);
+                  setParticipantsOpen(false);
+                }}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                ×
+              </button>
+            </div>
+            
+            {participantsOpen ? (
+              <div className="flex-1 overflow-y-auto p-4">
+                <div className="flex items-center space-x-3 p-2">
+                  <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                    <User className="text-blue-600 dark:text-blue-300 h-4 w-4" />
+                  </div>
+                  <span className="text-gray-800 dark:text-gray-200">
+                    {userName} (You)
+                  </span>
+                </div>
+                {remoteUsers.map(user => (
+                  <div key={user.uid} className="flex items-center space-x-3 p-2">
+                    <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                      <User className="text-gray-600 dark:text-gray-300 h-4 w-4" />
+                    </div>
+                    <span className="text-gray-800 dark:text-gray-200">
+                      {user.uid}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <ChatPanel
+                messages={messages}
+                messageInput={messageInput}
+                setMessageInput={setMessageInput}
+                sendMessage={sendMessage}
+                userName={userName}
+              />
+            )}
+          </div>
         )}
+      </div>
+
+      {/* Controls bar */}
+      <div className="w-full py-3 px-6 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-center items-center space-x-4">
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={toggleMic}
+            className={`p-2 rounded-full ${micOn ? 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600' : 'bg-red-100 hover:bg-red-200 dark:bg-red-900 dark:hover:bg-red-800'}`}
+            title={micOn ? "Mute" : "Unmute"}
+          >
+            {micOn ? (
+              <Mic className="h-5 w-5 text-gray-800 dark:text-gray-200" />
+            ) : (
+              <MicOff className="h-5 w-5 text-red-600 dark:text-red-300" />
+            )}
+          </button>
+          <span className="text-xs text-gray-600 dark:text-gray-400">Mic</span>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={toggleCamera}
+            className={`p-2 rounded-full ${cameraOn ? 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600' : 'bg-red-100 hover:bg-red-200 dark:bg-red-900 dark:hover:bg-red-800'}`}
+            title={cameraOn ? "Turn off camera" : "Turn on camera"}
+          >
+            {cameraOn ? (
+              <VideoIcon className="h-5 w-5 text-gray-800 dark:text-gray-200" />
+            ) : (
+              <VideoOff className="h-5 w-5 text-red-600 dark:text-red-300" />
+            )}
+          </button>
+          <span className="text-xs text-gray-600 dark:text-gray-400">Camera</span>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={startScreenShare}
+            className={`p-2 rounded-full ${screenSharing ? 'bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800' : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600'}`}
+            title="Share screen"
+          >
+            <Monitor className={`h-5 w-5 ${screenSharing ? 'text-blue-600 dark:text-blue-300' : 'text-gray-800 dark:text-gray-200'}`} />
+          </button>
+          <span className="text-xs text-gray-600 dark:text-gray-400">Share</span>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => {
+              setParticipantsOpen(true);
+              setChatOpen(false);
+            }}
+            className={`p-2 rounded-full ${participantsOpen ? 'bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800' : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600'}`}
+            title="Participants"
+          >
+            <User className={`h-5 w-5 ${participantsOpen ? 'text-blue-600 dark:text-blue-300' : 'text-gray-800 dark:text-gray-200'}`} />
+          </button>
+          <span className="text-xs text-gray-600 dark:text-gray-400">People</span>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => {
+              setChatOpen(true);
+              setParticipantsOpen(false);
+            }}
+            className={`p-2 rounded-full ${chatOpen ? 'bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800' : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600'}`}
+            title="Chat"
+          >
+            <MessageSquare className={`h-5 w-5 ${chatOpen ? 'text-blue-600 dark:text-blue-300' : 'text-gray-800 dark:text-gray-200'}`} />
+          </button>
+          <span className="text-xs text-gray-600 dark:text-gray-400">Chat</span>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => setSettingsOpen(!settingsOpen)}
+            className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600"
+            title="Settings"
+          >
+            <Settings className="h-5 w-5 text-gray-800 dark:text-gray-200" />
+          </button>
+        </div>
+
+        <button
+          onClick={leaveMeeting}
+          className="ml-4 px-4 py-2 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center space-x-2"
+        >
+          <PhoneOff className="h-5 w-5" />
+          <span>Leave</span>
+        </button>
       </div>
     </div>
   );

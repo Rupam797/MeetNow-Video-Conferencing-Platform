@@ -33,6 +33,7 @@ export default function Login() {
 
       <section className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
         <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
+        <h2 className="text-4xl font-bold text-center  text-blue-600 dark:text-blue-400 mb-6">Login</h2>
           <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-6">
             Welcome Back
           </h2>
