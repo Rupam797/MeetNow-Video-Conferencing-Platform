@@ -14,7 +14,7 @@ const AIChatWidget = () => {
   // Initialize Gemini API
   useEffect(() => {
     // Replace with your actual API key (store securely in production)
-    const API_KEY = "AIzaSyDm6po1o70nSaZc--7rpNFHL0wx2Fr6PXE";
+    const API_KEY = "";
     genAI.current = new GoogleGenerativeAI(API_KEY);
     
     // Initial bot message
