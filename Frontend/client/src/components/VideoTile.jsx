@@ -23,7 +23,7 @@ const VideoTile = ({ track, isLocal, user, name, videoActive, audioActive }) => 
         };
       }
     }
-  }, [track, user, videoActive, isLocal]);
+  }, [track, user, user?.videoTrack, videoActive, isLocal]);
 
   const getInitials = (n) => {
     if (!n) return 'U';

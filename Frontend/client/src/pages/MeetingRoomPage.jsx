@@ -16,6 +16,8 @@ import AgoraRTC, {
   useLocalMicrophoneTrack,
   usePublish,
   useRemoteUsers,
+  useRemoteAudioTracks,
+  useRemoteVideoTracks,
 } from 'agora-rtc-react';
 
 const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
@@ -119,17 +121,19 @@ const MeetingRoomInner = ({
   // 3. Publish local video/audio tracks
   usePublish([localMicrophoneTrack, localCameraTrack]);
 
-  // 4. Retrieve remote users in the channel
+  // 4. Retrieve remote users in the channel and subscribe to their tracks
   const remoteUsers = useRemoteUsers();
+  const { audioTracks } = useRemoteAudioTracks(remoteUsers);
+  useRemoteVideoTracks(remoteUsers);
 
   // 5. Play remote users' audio automatically
   useEffect(() => {
-    remoteUsers.forEach((remoteUser) => {
-      if (remoteUser.audioTrack && !remoteUser.audioTrack.isPlaying) {
-        remoteUser.audioTrack.play();
+    audioTracks.forEach((track) => {
+      if (track && !track.isPlaying) {
+        track.play();
       }
     });
-  }, [remoteUsers]);
+  }, [audioTracks]);
 
   // 6. Handle device activation changes
   useEffect(() => {
