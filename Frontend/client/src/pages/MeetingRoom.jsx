@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import ThemeToggle from "../components/ThemeToggle";
 import { toast } from "react-toastify";
+import { AppConstants } from "../util/constants";
 
 // Initialize the client OUTSIDE the component so it doesn't get recreated on every React re-render!
 const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
@@ -71,14 +72,55 @@ const MeetingContent = ({ userName, meetingCode, initialSettings, client }) => {
   const remoteUsers = useRemoteUsers();
   const screenTrackRef = useRef(null);
 
-
+  // Generate a unique numeric UID per session — Agora SDK v4 requires numeric UIDs.
+  // Using userName as UID caused collisions (same-name users = same person) and type errors.
+  const [agoraUid] = useState(() => Math.floor(Math.random() * 100000) + 1);
+  const [agoraToken, setAgoraToken] = useState(null);
+  const [tokenReady, setTokenReady] = useState(false);
 
   // Agora credentials
   const appId = import.meta.env.VITE_AGORA_APP_ID;
   const channel = meetingCode; // Use the unique meeting code so users get their own dynamic rooms
 
-  // Force token to null to guarantee Testing Mode connects without triggering token timeout errors
-  useJoin({ appid: appId, channel, token: null, uid: userName }, calling);
+  // Fetch a server-generated Agora RTC token before joining
+  useEffect(() => {
+    const fetchToken = async () => {
+      try {
+        const backendURL = AppConstants.BACEND_URL;
+        const res = await fetch(
+          `${backendURL}/api/meetings/token?channelName=${encodeURIComponent(channel)}&uid=${agoraUid}`
+        );
+        const data = await res.json();
+        if (data.token) {
+          console.log(`[MeetNow] Token fetched for channel "${channel}", uid=${agoraUid}`);
+          setAgoraToken(data.token);
+          setTokenReady(true);
+        } else {
+          console.error("[MeetNow] Token fetch failed:", data.message);
+          toast.error("Failed to get meeting token. Please try again.");
+        }
+      } catch (err) {
+        console.error("[MeetNow] Token fetch error:", err);
+        toast.error("Could not connect to token server.");
+      }
+    };
+    fetchToken();
+  }, [channel, agoraUid]);
+
+  // Log connection details for debugging
+  useEffect(() => {
+    console.log(`[MeetNow] Joining channel "${channel}" as uid=${agoraUid} (display name: ${userName})`);
+  }, [channel, agoraUid, userName]);
+
+  useEffect(() => {
+    console.log(`[MeetNow] Connected: ${isConnected}, Remote users: ${remoteUsers.length}`);
+  }, [isConnected, remoteUsers.length]);
+
+  // Only join after we have a valid token from the backend
+  useJoin(
+    { appid: appId, channel, token: agoraToken, uid: agoraUid },
+    calling && tokenReady
+  );
 
   const { localMicrophoneTrack } = useLocalMicrophoneTrack();
   const { localCameraTrack } = useLocalCameraTrack();
@@ -384,7 +426,7 @@ const MeetingContent = ({ userName, meetingCode, initialSettings, client }) => {
                   style={{ width: "100%", height: "100%" }}
                 />
                 <div className="absolute bottom-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-sm">
-                  {user.uid}
+                  Participant #{user.uid}
                 </div>
                 {!user.hasVideo && (
                   <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
@@ -433,7 +475,7 @@ const MeetingContent = ({ userName, meetingCode, initialSettings, client }) => {
                       <User className="text-gray-600 dark:text-gray-300 h-4 w-4" />
                     </div>
                     <span className="text-gray-800 dark:text-gray-200">
-                      {user.uid}
+                      Participant #{user.uid}
                     </span>
                   </div>
                 ))}

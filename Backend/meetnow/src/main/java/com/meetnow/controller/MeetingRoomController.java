@@ -2,6 +2,7 @@ package com.meetnow.controller;
 
 import com.meetnow.entity.MeetingRoom;
 import com.meetnow.repository.MeetingRoomRepository;
+import com.meetnow.service.AgoraTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,7 @@ import java.util.Map;
 public class MeetingRoomController {
 
     private final MeetingRoomRepository meetingRoomRepository;
+    private final AgoraTokenService agoraTokenService;
 
     @PostMapping("/create")
     public ResponseEntity<?> createMeetingRoom(@RequestBody Map<String, String> request,
@@ -69,4 +71,24 @@ public class MeetingRoomController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err);
         }
     }
+
+    /**
+     * Generate an Agora RTC token for a given channel and UID.
+     * Called by the frontend before joining a meeting room.
+     */
+    @GetMapping("/token")
+    public ResponseEntity<?> getAgoraToken(@RequestParam String channelName,
+                                           @RequestParam int uid) {
+        try {
+            String token = agoraTokenService.generateRtcToken(channelName, uid);
+            Map<String, String> response = new HashMap<>();
+            response.put("token", token);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> err = new HashMap<>();
+            err.put("message", "Failed to generate token: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(err);
+        }
+    }
 }
+
