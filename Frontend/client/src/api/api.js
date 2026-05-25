@@ -1,7 +1,19 @@
 import axios from 'axios';
 
+let backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080/api/v1.0';
+
+// Remove trailing slash if present
+if (backendUrl.endsWith('/')) {
+  backendUrl = backendUrl.slice(0, -1);
+}
+
+// Automatically append context path '/api/v1.0' if not present
+if (!backendUrl.endsWith('/api/v1.0')) {
+  backendUrl = `${backendUrl}/api/v1.0`;
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080/api/v1.0',
+  baseURL: backendUrl,
   headers: {
     'Content-Type': 'application/json',
   },
