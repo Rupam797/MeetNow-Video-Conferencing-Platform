@@ -11,25 +11,24 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
 
-@Document(collection = "meeting_rooms")
+@Document(collection = "users")
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Builder
-public class MeetingRoom {
+@AllArgsConstructor
+@NoArgsConstructor
+public class User {
 
     @Id
     private String id;
 
+    private String userId;
+
+    private String name;
+
     @Indexed(unique = true)
-    private String roomId;
+    private String email;
 
-    private String roomName;
-
-    private String createdBy;
-
-    @Builder.Default
-    private boolean active = true;
+    private String password;
 
     @CreatedDate
     private Instant createdAt;

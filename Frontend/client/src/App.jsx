@@ -1,31 +1,77 @@
-import './App.css'
-import {ToastContainer} from "react-toastify";
-import {Route, Routes} from "react-router-dom";
-import Login from "./pages/Login.jsx";
-import Home from "./pages/Home.jsx";
-import EmailVerify from "./pages/EmailVerify.jsx";
-import ResetPassword from "./pages/ResetPassword.jsx";
-import Dashboard from './pages/Dashboard.jsx';
-import MeetingLobby from './pages/MeetingLobby.jsx';
-import MeetingRoom from './pages/MeetingRoom.jsx';
+import React from 'react';
+import { Route, Routes } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
+// Pages
+import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
+import DashboardPage from './pages/DashboardPage';
+import LobbyPage from './pages/LobbyPage';
+import MeetingRoomPage from './pages/MeetingRoomPage';
+
+// Components
+import ProtectedRoute from './components/ProtectedRoute';
 
 const App = () => {
-    return (
-        <div>
-            <ToastContainer />
-            <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/email-verify" element={<EmailVerify />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path='/Dashboard' element={<Dashboard/>} />
-                <Route path='/join/:meetingCode' element={<Dashboard/>} />
-                <Route path='/Meetinglobby/:meetingCode' element={<MeetingLobby/>} />
-                <Route path='/Meetingroom/:meetingCode' element={<MeetingRoom/>} />
-            </Routes>
-        </div>
-    )
-}
+  return (
+    <div>
+      <ToastContainer 
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
+      
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
 
-export default App
+        {/* Protected Routes */}
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/join/:roomId" 
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/lobby/:roomId" 
+          element={
+            <ProtectedRoute>
+              <LobbyPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/room/:roomId" 
+          element={
+            <ProtectedRoute>
+              <MeetingRoomPage />
+            </ProtectedRoute>
+          } 
+        />
+      </Routes>
+    </div>
+  );
+};
+
+export default App;

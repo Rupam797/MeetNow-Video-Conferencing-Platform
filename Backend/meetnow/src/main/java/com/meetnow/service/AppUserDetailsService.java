@@ -1,10 +1,8 @@
 package com.meetnow.service;
 
-
-import com.meetnow.entity.UserEntity;
-import com.meetnow.repository.UserRepostory;
+import com.meetnow.entity.User;
+import com.meetnow.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -16,13 +14,17 @@ import java.util.ArrayList;
 @RequiredArgsConstructor
 public class AppUserDetailsService implements UserDetailsService {
 
-    private final UserRepostory userRepostory;
-
+    private final UserRepository userRepository;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        UserEntity existingUser = userRepostory.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Email not found for the email: "+email));
-        return new User(existingUser.getEmail(), existingUser.getPassword(), new ArrayList<>());
+        User user = userRepository.findByEmail(email.toLowerCase().trim())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+
+        return new org.springframework.security.core.userdetails.User(
+                user.getEmail(),
+                user.getPassword(),
+                new ArrayList<>()
+        );
     }
 }

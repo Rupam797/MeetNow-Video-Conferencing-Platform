@@ -1,28 +1,23 @@
 package com.meetnow.controller;
 
-import com.meetnow.io.AuthRequest;
+import com.meetnow.entity.User;
 import com.meetnow.io.AuthResponse;
-import com.meetnow.io.ResetPasswordRequest;
+import com.meetnow.io.LoginRequest;
+import com.meetnow.io.SignupRequest;
 import com.meetnow.service.AppUserDetailsService;
-import com.meetnow.service.ProfileService;
+import com.meetnow.service.UserService;
 import com.meetnow.util.JwtUtil;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.annotation.CurrentSecurityContext;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
-import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,36 +27,71 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final AppUserDetailsService appUserDetailsService;
-
+    private final UserService userService;
     private final JwtUtil jwtUtil;
 
-    private final ProfileService profileService;
-
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody AuthRequest request) {
+    /**
+     * POST /register — Create a new user account
+     */
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@Valid @RequestBody SignupRequest request) {
         try {
-            authenticate(request.getEmail(), request.getPassword());
-            final UserDetails userDetails = appUserDetailsService.loadUserByUsername(request.getEmail());
-            final String jwtToken = jwtUtil.generateToken(userDetails);
-            ResponseCookie cookie = ResponseCookie.from("jwt", jwtToken)
-                    .httpOnly(true)
-                    .path("/")
-                    .maxAge(Duration.ofDays(1))
-                    .sameSite("Strict")
+            User user = userService.signup(request);
+
+            // Auto-login after signup: generate JWT immediately
+            final String jwtToken = jwtUtil.generateToken(user.getEmail());
+
+            AuthResponse response = AuthResponse.builder()
+                    .email(user.getEmail())
+                    .name(user.getName())
+                    .token(jwtToken)
                     .build();
-            return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString())
-                    .body(new AuthResponse(request.getEmail(), jwtToken));
-        } catch(BadCredentialsException ex) {
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        } catch (RuntimeException e) {
             Map<String, Object> error = new HashMap<>();
             error.put("error", true);
-            error.put("message", "Email or password is incorrect");
+            error.put("message", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-        } catch(DisabledException ex) {
+        }
+    }
+
+    /**
+     * POST /login — Authenticate and return JWT token
+     */
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getEmail().toLowerCase().trim(),
+                            request.getPassword()
+                    )
+            );
+
+            final UserDetails userDetails = appUserDetailsService
+                    .loadUserByUsername(request.getEmail());
+            final String jwtToken = jwtUtil.generateToken(userDetails.getUsername());
+
+            // Fetch user name from DB
+            User user = userService.findByEmail(request.getEmail())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            AuthResponse response = AuthResponse.builder()
+                    .email(user.getEmail())
+                    .name(user.getName())
+                    .token(jwtToken)
+                    .build();
+
+            return ResponseEntity.ok(response);
+
+        } catch (BadCredentialsException e) {
             Map<String, Object> error = new HashMap<>();
             error.put("error", true);
-            error.put("message", "Account is disabled");
+            error.put("message", "Invalid email or password");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
-        }catch(Exception ex) {
+        } catch (Exception e) {
             Map<String, Object> error = new HashMap<>();
             error.put("error", true);
             error.put("message", "Authentication failed");
@@ -69,69 +99,26 @@ public class AuthController {
         }
     }
 
-    private void authenticate(String email, String password) {
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
-    }
+    /**
+     * GET /auth/me — Get current authenticated user info
+     */
+    @GetMapping("/auth/me")
+    public ResponseEntity<?> getCurrentUser(
+            @CurrentSecurityContext(expression = "authentication?.name") String email) {
 
-    @GetMapping("/is-authenticated")
-    public ResponseEntity<Boolean> isAuthenticated(@CurrentSecurityContext(expression = "authentication?.name") String email) {
-        return ResponseEntity.ok(email != null);
-    }
-
-    @PostMapping("/send-reset-otp")
-    public void sendResetOtp(@RequestParam String email) {
-        try {
-            profileService.sendResetOtp(email);
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-        }
-    }
-
-    @PostMapping("/reset-password")
-    public void resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
-        try {
-            profileService.resetPassword(request.getEmail(), request.getOtp(), request.getNewPassword());
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-        }
-    }
-
-    @PostMapping("/send-otp")
-    public void sendVerifyOtp(@CurrentSecurityContext(expression = "authentication?.name") String email) {
-        try {
-            profileService.sendOtp(email);
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-        }
-    }
-
-    @PostMapping("/verify-otp")
-    public void verifyEmail(@RequestBody Map<String, Object> request,
-                            @CurrentSecurityContext(expression = "authentication?.name") String email) {
-        if (request.get("otp").toString() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing details");
+        if (email == null || email.equals("anonymousUser")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", true, "message", "Not authenticated"));
         }
 
-        try {
-            profileService.verifyOtp(email, request.get("otp").toString());
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-        }
+        User user = userService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("email", user.getEmail());
+        response.put("name", user.getName());
+        response.put("userId", user.getUserId());
+
+        return ResponseEntity.ok(response);
     }
-
-    @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletResponse response) {
-        ResponseCookie cookie = ResponseCookie.from("jwt", "")
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .maxAge(0)
-                .sameSite("Strict")
-                .build();
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body("Logged out successfully!");
-    }
-
 }

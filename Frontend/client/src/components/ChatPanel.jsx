@@ -1,44 +1,98 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Send } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
-const ChatPanel = ({
-  messages,
-  messageInput,
-  setMessageInput,
-  sendMessage,
-}) => {
+const ChatPanel = ({ onClose }) => {
+  const { user } = useAuth();
+  const [messages, setMessages] = useState([
+    {
+      id: 1,
+      sender: 'MeetNow Bot',
+      content: 'Welcome to the meeting! Share the link or Room ID with others so they can join you.',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isOwn: false,
+    }
+  ]);
+  const [inputValue, setInputValue] = useState('');
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const handleSend = (e) => {
+    e.preventDefault();
+    if (!inputValue.trim()) return;
+
+    const newMessage = {
+      id: Date.now(),
+      sender: user?.name || 'You',
+      content: inputValue,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isOwn: true,
+    };
+
+    setMessages((prev) => [...prev, newMessage]);
+    setInputValue('');
+
+    // Simulate an interactive bot response after 1.5 seconds to make the UI feel alive!
+    setTimeout(() => {
+      const responses = [
+        "Awesome! Hope you're enjoying the premium design.",
+        "Your audio and video signals are looking strong!",
+        "Tip: You can toggle your camera and microphone using the control bar below.",
+        "Need to invite others? Just copy the Room ID from the top left and send it over!",
+      ];
+      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+      
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          sender: 'MeetNow Bot',
+          content: randomResponse,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          isOwn: false,
+        }
+      ]);
+    }, 1500);
+  };
+
   return (
-    <div className="w-80 bg-gray-200 dark:bg-gray-800 p-4 border-l border-gray-300 dark:border-gray-700 flex flex-col">
-      <h2 className="text-xl font-bold mb-2">Chat</h2>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto space-y-2 mb-4">
-        {messages.map((msg, idx) => (
-          <div
-            key={idx}
-            className="bg-gray-300 dark:bg-gray-700 p-2 rounded break-words"
-          >
-            <strong>{msg.user}:</strong> {msg.text}
-          </div>
-        ))}
-      </div>
-
-      {/* Input */}
-      <div className="flex">
-        <input
-          type="text"
-          value={messageInput}
-          onChange={(e) => setMessageInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-          className="flex-1 p-2 text-black rounded-l focus:outline-none"
-          placeholder="Type a message"
-        />
-        <button
-          onClick={sendMessage}
-          className="bg-blue-600 hover:bg-blue-700 px-4 rounded-r text-white transition"
-        >
-          Send
+    <div className="side-panel">
+      <div className="side-panel-header">
+        <h3>Meeting Chat</h3>
+        <button onClick={onClose} className="side-panel-close">
+          <X size={16} />
         </button>
       </div>
+
+      <div className="side-panel-body">
+        {messages.map((msg) => (
+          <div key={msg.id} className={`chat-message ${msg.isOwn ? 'own' : ''}`}>
+            <div className="chat-message-sender">{msg.sender}</div>
+            <div className="chat-message-bubble">{msg.content}</div>
+            <div className="chat-message-time">{msg.time}</div>
+          </div>
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
+
+      <form onSubmit={handleSend} className="chat-input-area">
+        <input
+          type="text"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          placeholder="Send a message..."
+        />
+        <button type="submit" className="chat-send-btn">
+          <Send size={14} />
+        </button>
+      </form>
     </div>
   );
 };
