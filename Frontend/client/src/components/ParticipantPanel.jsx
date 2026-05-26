@@ -2,12 +2,16 @@ import React from 'react';
 import { X, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const ParticipantPanel = ({ remoteUsers = [], onClose }) => {
+const ParticipantPanel = ({ remoteUsers = [], participantNames = {}, onClose }) => {
   const { user } = useAuth();
 
   const getInitials = (name) => {
     if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+  };
+
+  const getRemoteUserName = (uid) => {
+    return participantNames[String(uid)] || `Participant ${uid}`;
   };
 
   return (
@@ -32,7 +36,7 @@ const ParticipantPanel = ({ remoteUsers = [], onClose }) => {
         {/* Remote users */}
         {remoteUsers.map((remoteUser) => {
           const uid = remoteUser.uid;
-          const remoteName = `Participant ${uid}`;
+          const remoteName = getRemoteUserName(uid);
           return (
             <div key={uid} className="participant-item">
               <div className="participant-avatar">

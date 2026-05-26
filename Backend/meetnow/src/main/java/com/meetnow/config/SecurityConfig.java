@@ -41,7 +41,8 @@ public class SecurityConfig {
                                 "/register",
                                 "/login",
                                 "/api/meetings/validate/**",
-                                "/api/meetings/token"
+                                "/api/meetings/token",
+                                "/api/meetings/participants/**"
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()

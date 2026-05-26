@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import api from '../api/api';
@@ -103,6 +103,56 @@ const MeetingRoomInner = ({
   const [chatOpen, setChatOpen] = useState(false);
   const [participantsOpen, setParticipantsOpen] = useState(false);
 
+  // Participant name registry: uid -> name
+  const [participantNames, setParticipantNames] = useState({});
+  const pollIntervalRef = useRef(null);
+
+  // Register local user's name when joining
+  useEffect(() => {
+    const registerParticipant = async () => {
+      try {
+        await api.post('/api/meetings/participants/register', {
+          channelName: roomId,
+          uid: String(uid),
+          name: user?.name || 'Guest',
+        });
+      } catch (err) {
+        console.error('Failed to register participant name:', err);
+      }
+    };
+
+    registerParticipant();
+  }, [roomId, uid, user]);
+
+  // Fetch participant names periodically
+  const fetchParticipantNames = useCallback(async () => {
+    try {
+      const response = await api.get(`/api/meetings/participants/${roomId}`);
+      setParticipantNames(response.data);
+    } catch (err) {
+      console.error('Failed to fetch participant names:', err);
+    }
+  }, [roomId]);
+
+  useEffect(() => {
+    // Fetch immediately
+    fetchParticipantNames();
+
+    // Then poll every 5 seconds
+    pollIntervalRef.current = setInterval(fetchParticipantNames, 5000);
+
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+    };
+  }, [fetchParticipantNames]);
+
+  // Helper to get display name for a remote user
+  const getRemoteUserName = (remoteUid) => {
+    return participantNames[String(remoteUid)] || `Participant ${remoteUid}`;
+  };
+
   // 1. Join the Agora RTC Channel
   useJoin(
     {
@@ -125,6 +175,11 @@ const MeetingRoomInner = ({
   const remoteUsers = useRemoteUsers();
   const { audioTracks } = useRemoteAudioTracks(remoteUsers);
   useRemoteVideoTracks(remoteUsers);
+
+  // Re-fetch participant names when remote users list changes (new user joined/left)
+  useEffect(() => {
+    fetchParticipantNames();
+  }, [remoteUsers.length, fetchParticipantNames]);
 
   // 5. Play remote users' audio automatically
   useEffect(() => {
@@ -200,6 +255,20 @@ const MeetingRoomInner = ({
   };
 
   const handleLeave = async () => {
+    // Unregister participant name
+    try {
+      await api.post('/api/meetings/participants/unregister', {
+        channelName: roomId,
+        uid: String(uid),
+      });
+    } catch (err) {
+      console.error('Failed to unregister participant:', err);
+    }
+
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+    }
+
     if (screenTrack) {
       screenTrack.close();
     }
@@ -267,7 +336,7 @@ const MeetingRoomInner = ({
                 key={remoteUser.uid}
                 user={remoteUser}
                 isLocal={false}
-                name={`Participant ${remoteUser.uid}`}
+                name={getRemoteUserName(remoteUser.uid)}
                 videoActive={remoteUser.hasVideo}
                 audioActive={remoteUser.hasAudio}
               />
@@ -283,6 +352,7 @@ const MeetingRoomInner = ({
         {participantsOpen && (
           <ParticipantPanel 
             remoteUsers={remoteUsers} 
+            participantNames={participantNames}
             onClose={() => setParticipantsOpen(false)} 
           />
         )}

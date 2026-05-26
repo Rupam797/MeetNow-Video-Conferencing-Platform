@@ -22,7 +22,7 @@ const Navbar = () => {
   return (
     <nav className="navbar">
       <div className="navbar-inner">
-        <Link to={isAuthenticated ? "/dashboard" : "/"} className="navbar-logo">
+        <Link to={isAuthenticated ? (user?.role === 'ADMIN' ? "/admin" : "/dashboard") : "/"} className="navbar-logo">
           <div className="navbar-logo-icon">
             <Video size={18} />
           </div>
