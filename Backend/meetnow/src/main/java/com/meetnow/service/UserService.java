@@ -22,11 +22,17 @@ public class UserService {
             throw new RuntimeException("Email already registered");
         }
 
+        String role = "USER";
+        if (request.getEmail().toLowerCase().trim().equals("admin@meetnow.com") || userRepository.count() == 0) {
+            role = "ADMIN";
+        }
+
         User user = User.builder()
                 .userId(UUID.randomUUID().toString())
                 .name(request.getName())
                 .email(request.getEmail().toLowerCase().trim())
                 .password(passwordEncoder.encode(request.getPassword()))
+                .role(role)
                 .build();
 
         return userRepository.save(user);

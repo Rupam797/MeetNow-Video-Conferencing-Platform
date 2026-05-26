@@ -10,9 +10,31 @@ import SignupPage from './pages/SignupPage';
 import DashboardPage from './pages/DashboardPage';
 import LobbyPage from './pages/LobbyPage';
 import MeetingRoomPage from './pages/MeetingRoomPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from './context/AuthContext';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
+
+const AdminRoute = ({ children }) => {
+  const { user, isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="loading-screen">
+        <div className="loading-spinner-lg"></div>
+        <p>Checking authorization...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || user?.role !== 'ADMIN') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+};
 
 const App = () => {
   return (
@@ -67,6 +89,14 @@ const App = () => {
             <ProtectedRoute>
               <MeetingRoomPage />
             </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin" 
+          element={
+            <AdminRoute>
+              <AdminDashboardPage />
+            </AdminRoute>
           } 
         />
       </Routes>

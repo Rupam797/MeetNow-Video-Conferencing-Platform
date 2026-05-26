@@ -30,6 +30,9 @@ public class User {
 
     private String password;
 
+    @Builder.Default
+    private String role = "USER";
+
     @CreatedDate
     private Instant createdAt;
 }

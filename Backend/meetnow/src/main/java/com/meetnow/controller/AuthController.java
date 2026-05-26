@@ -45,6 +45,7 @@ public class AuthController {
                     .email(user.getEmail())
                     .name(user.getName())
                     .token(jwtToken)
+                    .role(user.getRole())
                     .build();
 
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -82,6 +83,7 @@ public class AuthController {
                     .email(user.getEmail())
                     .name(user.getName())
                     .token(jwtToken)
+                    .role(user.getRole())
                     .build();
 
             return ResponseEntity.ok(response);
@@ -118,6 +120,7 @@ public class AuthController {
         response.put("email", user.getEmail());
         response.put("name", user.getName());
         response.put("userId", user.getUserId());
+        response.put("role", user.getRole());
 
         return ResponseEntity.ok(response);
     }

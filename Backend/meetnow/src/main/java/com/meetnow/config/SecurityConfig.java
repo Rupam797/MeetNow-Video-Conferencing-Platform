@@ -43,6 +43,7 @@ public class SecurityConfig {
                                 "/api/meetings/validate/**",
                                 "/api/meetings/token"
                         ).permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

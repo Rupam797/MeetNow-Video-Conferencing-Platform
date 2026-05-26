@@ -41,6 +41,11 @@ const Navbar = () => {
 
           {isAuthenticated ? (
             <>
+              {user?.role === 'ADMIN' && (
+                <Link to="/admin" className="btn btn-secondary btn-sm" style={{ marginRight: '4px' }}>
+                  Admin Panel
+                </Link>
+              )}
               <div className="navbar-user">
                 <div className="navbar-avatar">
                   {getInitials(user?.name)}

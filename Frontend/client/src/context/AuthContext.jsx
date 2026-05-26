@@ -39,11 +39,11 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     try {
       const response = await api.post('/login', { email, password });
-      const { token: jwtToken, name, email: userEmail } = response.data;
+      const { token: jwtToken, name, email: userEmail, role } = response.data;
       
       localStorage.setItem('token', jwtToken);
       setToken(jwtToken);
-      setUser({ name, email: userEmail });
+      setUser({ name, email: userEmail, role });
       setIsAuthenticated(true);
       setLoading(false);
       return { success: true };
@@ -59,11 +59,11 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     try {
       const response = await api.post('/register', { name, email, password });
-      const { token: jwtToken, name: userName, email: userEmail } = response.data;
+      const { token: jwtToken, name: userName, email: userEmail, role } = response.data;
 
       localStorage.setItem('token', jwtToken);
       setToken(jwtToken);
-      setUser({ name: userName, email: userEmail });
+      setUser({ name: userName, email: userEmail, role });
       setIsAuthenticated(true);
       setLoading(false);
       return { success: true };
