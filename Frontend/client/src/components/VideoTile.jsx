@@ -8,25 +8,22 @@ const VideoTile = ({ track, isLocal, user, name, videoActive, audioActive }) => 
     const container = videoRef.current;
     if (!container) return;
 
-    // Determine the actual video track to play
-    const videoTrack = isLocal ? track : user?.videoTrack;
-
-    if (!videoTrack || !videoActive) {
-      // Clean the container when there's no track or video is off
-      container.innerHTML = '';
-      return;
+    if (isLocal) {
+      if (track && videoActive) {
+        track.play(container);
+        return () => {
+          track.stop();
+        };
+      }
+    } else {
+      if (user && user.videoTrack && videoActive) {
+        user.videoTrack.play(container);
+        return () => {
+          user.videoTrack.stop();
+        };
+      }
     }
-
-    // Play the track into the container
-    videoTrack.play(container);
-
-    return () => {
-      // Just clear the container — do NOT call videoTrack.stop() or .close()
-      // because tracks are managed by Agora hooks and calling stop() on them
-      // will permanently destroy them, causing crashes on re-toggle.
-      container.innerHTML = '';
-    };
-  }, [track, user?.videoTrack, videoActive, isLocal]);
+  }, [track, user, user?.videoTrack, videoActive, isLocal]);
 
   const getInitials = (n) => {
     if (!n) return 'U';

@@ -165,14 +165,11 @@ const MeetingRoomInner = ({
   );
 
   // 2. Initialize local mic and camera tracks
-  // Pass the toggle state directly to the hooks — the hooks handle
-  // creating the track when true and releasing it when false.
-  // Do NOT use setEnabled() separately, as it conflicts with hook internals.
   const { localMicrophoneTrack } = useLocalMicrophoneTrack(micActive);
   const { localCameraTrack } = useLocalCameraTrack(cameraActive);
 
-  // 3. Publish local video/audio tracks (including screen track when active)
-  usePublish([localMicrophoneTrack, localCameraTrack, screenTrack]);
+  // 3. Publish local video/audio tracks
+  usePublish([localMicrophoneTrack, localCameraTrack]);
 
   // 4. Retrieve remote users in the channel and subscribe to their tracks
   const remoteUsers = useRemoteUsers();
@@ -193,29 +190,60 @@ const MeetingRoomInner = ({
     });
   }, [audioTracks]);
 
-  // 6. Screen Share toggle — usePublish handles publication automatically
+  // 6. Handle device activation changes
+  useEffect(() => {
+    if (localMicrophoneTrack) {
+      localMicrophoneTrack.setEnabled(micActive);
+    }
+  }, [micActive, localMicrophoneTrack]);
+
+  useEffect(() => {
+    if (localCameraTrack && !screenShareActive) {
+      localCameraTrack.setEnabled(cameraActive);
+    }
+  }, [cameraActive, localCameraTrack, screenShareActive]);
+
+  // 7. Screen Share toggle
   const handleToggleScreenShare = async () => {
     if (screenShareActive) {
-      // Stop screen share — close the track and clear state
-      // usePublish will automatically unpublish when screenTrack becomes null
-      const oldTrack = screenTrack;
-      setScreenTrack(null);
+      // Stop screen share
+      if (screenTrack) {
+        await client.unpublish(screenTrack);
+        screenTrack.close();
+        setScreenTrack(null);
+      }
       setScreenShareActive(false);
-      if (oldTrack) {
-        oldTrack.close();
+      
+      // Re-enable camera track
+      if (localCameraTrack && cameraActive) {
+        await client.publish(localCameraTrack);
+        localCameraTrack.setEnabled(true);
       }
     } else {
       try {
+        // Start screen share
         const track = await AgoraRTC.createScreenVideoTrack();
-        // Setting state triggers re-render → usePublish picks up the new track
         setScreenTrack(track);
         setScreenShareActive(true);
 
-        // Listen for screen share stop from browser's native "Stop sharing" button
-        track.on('track-ended', () => {
+        // Unpublish camera track if active
+        if (localCameraTrack) {
+          await client.unpublish(localCameraTrack);
+        }
+
+        await client.publish(track);
+
+        // Listen for screen share stop from browser control
+        track.on('track-ended', async () => {
+          await client.unpublish(track);
+          track.close();
           setScreenTrack(null);
           setScreenShareActive(false);
-          track.close();
+          
+          if (localCameraTrack && cameraActive) {
+            await client.publish(localCameraTrack);
+            localCameraTrack.setEnabled(true);
+          }
         });
 
       } catch (err) {
@@ -241,11 +269,9 @@ const MeetingRoomInner = ({
       clearInterval(pollIntervalRef.current);
     }
 
-    // Clean up screen share if active
     if (screenTrack) {
       screenTrack.close();
     }
-
     await client.leave();
     toast.info('You left the meeting.');
     navigate('/dashboard');
@@ -299,7 +325,7 @@ const MeetingRoomInner = ({
             <VideoTile
               track={screenShareActive ? screenTrack : localCameraTrack}
               isLocal={true}
-              name={`${user?.name || 'You'}${screenShareActive ? ' (Screen)' : ''}`}
+              name={`${user?.name || 'You'}${screenShareActive ? ' (Screen Share)' : ''}`}
               videoActive={screenShareActive ? true : cameraActive}
               audioActive={micActive}
             />
