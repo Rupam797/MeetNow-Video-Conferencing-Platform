@@ -34,47 +34,115 @@ const LobbyPage = () => {
     validateRoom();
   }, [roomId, navigate]);
 
-  // 2. Control webcam preview stream
+  // 2. Control webcam preview stream - Get the stream once on validation success
   useEffect(() => {
     if (isValidating) return;
 
     let activeStream = null;
+    let isCancelled = false;
 
-    const enableStream = async () => {
+    const initStream = async () => {
       try {
-        // Only request what is active
-        const constraints = {
-          video: cameraActive ? { width: 640, height: 480, facingMode: 'user' } : false,
-          audio: micActive
-        };
+        // Try requesting both video and audio first
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 640, height: 480, facingMode: 'user' },
+          audio: true
+        });
 
-        if (constraints.video || constraints.audio) {
-          const stream = await navigator.mediaDevices.getUserMedia(constraints);
-          activeStream = stream;
-          setPreviewStream(stream);
-
-          if (videoRef.current && cameraActive) {
-            videoRef.current.srcObject = stream;
-          }
-        } else {
-          setPreviewStream(null);
+        if (isCancelled) {
+          stream.getTracks().forEach(track => track.stop());
+          return;
         }
+
+        activeStream = stream;
+        
+        // Sync track enabled states with current toggle states
+        stream.getVideoTracks().forEach(track => {
+          track.enabled = cameraActive;
+        });
+        stream.getAudioTracks().forEach(track => {
+          track.enabled = micActive;
+        });
+
+        setPreviewStream(stream);
       } catch (err) {
-        console.warn('Failed to access media devices in preview:', err);
-        toast.warning('Could not access microphone or camera. You can still join.');
-        setCameraActive(false);
-        setMicActive(false);
+        console.warn('Failed to get both video and audio, trying video only:', err);
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: 640, height: 480, facingMode: 'user' }
+          });
+          if (isCancelled) {
+            stream.getTracks().forEach(track => track.stop());
+            return;
+          }
+          activeStream = stream;
+          stream.getVideoTracks().forEach(track => {
+            track.enabled = cameraActive;
+          });
+          setPreviewStream(stream);
+          setMicActive(false);
+        } catch (err2) {
+          console.warn('Failed to get video, trying audio only:', err2);
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              audio: true
+            });
+            if (isCancelled) {
+              stream.getTracks().forEach(track => track.stop());
+              return;
+            }
+            activeStream = stream;
+            stream.getAudioTracks().forEach(track => {
+              track.enabled = micActive;
+            });
+            setPreviewStream(stream);
+            setCameraActive(false);
+          } catch (err3) {
+            console.warn('No media devices accessible:', err3);
+            toast.warning('Could not access microphone or camera. You can still join.');
+            setCameraActive(false);
+            setMicActive(false);
+          }
+        }
       }
     };
 
-    enableStream();
+    initStream();
 
     return () => {
+      isCancelled = true;
       if (activeStream) {
         activeStream.getTracks().forEach(track => track.stop());
       }
     };
-  }, [cameraActive, micActive, isValidating]);
+  }, [isValidating]);
+
+  // 3. Reactively control video track states when cameraActive toggle changes
+  useEffect(() => {
+    if (previewStream) {
+      previewStream.getVideoTracks().forEach(track => {
+        track.enabled = cameraActive;
+      });
+    }
+  }, [previewStream, cameraActive]);
+
+  // 4. Reactively control audio track states when micActive toggle changes
+  useEffect(() => {
+    if (previewStream) {
+      previewStream.getAudioTracks().forEach(track => {
+        track.enabled = micActive;
+      });
+    }
+  }, [previewStream, micActive]);
+
+  // 5. Safely assign the srcObject to video element after rendering
+  useEffect(() => {
+    if (videoRef.current && previewStream && cameraActive) {
+      if (videoRef.current.srcObject !== previewStream) {
+        videoRef.current.srcObject = previewStream;
+      }
+    }
+  }, [previewStream, cameraActive]);
 
   const toggleMic = () => setMicActive(prev => !prev);
   const toggleCamera = () => setCameraActive(prev => !prev);
