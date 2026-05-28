@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Video, User, Mail, Lock } from 'lucide-react';
+import { User, Mail, Lock, ArrowRight } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 const SignupPage = () => {
@@ -38,12 +38,15 @@ const SignupPage = () => {
 
   return (
     <div className="auth-page">
+      {/* Animated Background Orbs */}
+      <div className="orb orb-indigo"></div>
+      <div className="orb orb-cyan"></div>
+
       <div className="auth-card">
-        <Link to="/" className="navbar-logo" style={{ justifyContent: 'center', marginBottom: 'var(--space-6)' }}>
-          <div className="navbar-logo-icon">
-            <Video size={18} />
-          </div>
-          <span>MeetNow</span>
+        <Link to="/" className="navbar-logo" style={{ justifyContent: 'center', marginBottom: '32px' }}>
+          <span>MeetN</span>
+          <span className="logo-dot"></span>
+          <span>w</span>
         </Link>
 
         <h2 className="auth-title text-center">Create Account</h2>
@@ -61,9 +64,9 @@ const SignupPage = () => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                style={{ paddingLeft: '2.5rem' }}
+                style={{ paddingLeft: '44px' }}
               />
-              <User size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <User size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             </div>
           </div>
 
@@ -78,9 +81,9 @@ const SignupPage = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                style={{ paddingLeft: '2.5rem' }}
+                style={{ paddingLeft: '44px' }}
               />
-              <Mail size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <Mail size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             </div>
           </div>
 
@@ -91,26 +94,29 @@ const SignupPage = () => {
                 type="password"
                 id="password"
                 className="input"
-                placeholder="••••••••"
+                placeholder="Create a secure password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                style={{ paddingLeft: '2.5rem' }}
+                style={{ paddingLeft: '44px' }}
               />
-              <Lock size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <Lock size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             </div>
           </div>
 
           <button 
             type="submit" 
             className="btn btn-primary w-full btn-lg" 
-            style={{ marginTop: 'var(--space-2)' }}
+            style={{ marginTop: '8px' }}
             disabled={isLoading}
           >
             {isLoading ? (
               <span className="spinner"></span>
             ) : (
-              <span>Create Account</span>
+              <>
+                <span>Create Account</span>
+                <ArrowRight size={18} />
+              </>
             )}
           </button>
         </form>

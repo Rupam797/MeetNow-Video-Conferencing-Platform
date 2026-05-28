@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import api from '../api/api';
 import { useAuth } from '../context/AuthContext';
-import { Mic, MicOff, Video, VideoOff, Clipboard, ArrowRight, User } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff, Copy, Check, ArrowRight, User } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 const LobbyPage = () => {
@@ -15,10 +15,12 @@ const LobbyPage = () => {
   const [cameraActive, setCameraActive] = useState(true);
   const [isValidating, setIsValidating] = useState(true);
   const [previewStream, setPreviewStream] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const [displayName, setDisplayName] = useState(user?.name || '');
   
   const videoRef = useRef(null);
 
-  // 1. Validate that the meeting room exists
+  // Validate that the meeting room exists
   useEffect(() => {
     const validateRoom = async () => {
       try {
@@ -34,7 +36,7 @@ const LobbyPage = () => {
     validateRoom();
   }, [roomId, navigate]);
 
-  // 2. Control webcam preview stream
+  // Control webcam preview stream
   useEffect(() => {
     if (isValidating) return;
 
@@ -42,7 +44,6 @@ const LobbyPage = () => {
 
     const enableStream = async () => {
       try {
-        // Only request what is active
         const constraints = {
           video: cameraActive ? { width: 640, height: 480, facingMode: 'user' } : false,
           audio: micActive
@@ -85,7 +86,6 @@ const LobbyPage = () => {
   };
 
   const handleJoin = () => {
-    // Navigate to the meeting room page and pass device states in history state
     navigate(`/room/${roomId}`, { 
       state: { 
         initialMic: micActive, 
@@ -94,10 +94,11 @@ const LobbyPage = () => {
     });
   };
 
-  const copyRoomLink = () => {
-    const link = `${window.location.origin}/join/${roomId}`;
-    navigator.clipboard.writeText(link);
-    toast.success('Room link copied!');
+  const copyMeetingId = () => {
+    navigator.clipboard.writeText(roomId);
+    setCopied(true);
+    toast.success('Meeting ID copied!');
+    setTimeout(() => setCopied(false), 1500);
   };
 
   if (isValidating) {
@@ -113,90 +114,97 @@ const LobbyPage = () => {
     <div>
       <Navbar />
 
-      <div className="lobby-page page-wrapper">
-        <div className="container">
-          <div className="lobby-container">
-            {/* Left Column — Preview */}
-            <div className="lobby-preview">
-              {cameraActive && previewStream?.getVideoTracks().length > 0 ? (
-                <video 
-                  ref={videoRef} 
-                  autoPlay 
-                  playsInline 
-                  muted 
-                />
-              ) : (
-                <div className="lobby-preview-off">
-                  <div className="lobby-preview-avatar">
-                    {user?.name ? (
-                      <span style={{ fontSize: '32px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
-                        {getInitials(user.name)}
-                      </span>
-                    ) : (
-                      <User size={48} />
-                    )}
-                  </div>
-                  <span>Camera is turned off</span>
-                </div>
-              )}
+      <div className="lobby-page">
+        {/* Animated Background Orbs */}
+        <div className="lobby-orbs">
+          <div className="orb orb-indigo"></div>
+          <div className="orb orb-cyan"></div>
+        </div>
 
-              {/* Toggle Buttons Overlaid */}
-              <div className="lobby-controls-bar">
-                <button 
-                  onClick={toggleMic} 
-                  className={`btn btn-icon ${micActive ? 'btn-secondary' : 'btn-danger'}`}
-                  title={micActive ? 'Mute Mic' : 'Unmute Mic'}
-                  style={{ width: '40px', height: '40px', borderRadius: '50%' }}
-                >
-                  {micActive ? <Mic size={16} /> : <MicOff size={16} />}
-                </button>
-                <button 
-                  onClick={toggleCamera} 
-                  className={`btn btn-icon ${cameraActive ? 'btn-secondary' : 'btn-danger'}`}
-                  title={cameraActive ? 'Turn Camera Off' : 'Turn Camera On'}
-                  style={{ width: '40px', height: '40px', borderRadius: '50%' }}
-                >
-                  {cameraActive ? <Video size={16} /> : <VideoOff size={16} />}
-                </button>
+        <div className="lobby-container">
+          {/* Left Column — Camera Preview */}
+          <div className="lobby-preview">
+            {cameraActive && previewStream?.getVideoTracks().length > 0 ? (
+              <video 
+                ref={videoRef} 
+                autoPlay 
+                playsInline 
+                muted 
+              />
+            ) : (
+              <div className="lobby-preview-off">
+                <div className="lobby-preview-avatar">
+                  {user?.name ? getInitials(user.name) : <User size={32} />}
+                </div>
+                <span>Camera Off</span>
               </div>
+            )}
+
+            {/* Device Toggle Buttons */}
+            <div className="lobby-controls-bar">
+              <button 
+                onClick={toggleMic} 
+                className={`device-toggle ${micActive ? 'active' : 'inactive'}`}
+                title={micActive ? 'Mute Mic' : 'Unmute Mic'}
+              >
+                {micActive ? <Mic size={20} /> : <MicOff size={20} />}
+              </button>
+              <button 
+                onClick={toggleCamera} 
+                className={`device-toggle ${cameraActive ? 'active' : 'inactive'}`}
+                title={cameraActive ? 'Turn Camera Off' : 'Turn Camera On'}
+              >
+                {cameraActive ? <Video size={20} /> : <VideoOff size={20} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Right Column — Join Info */}
+          <div className="lobby-info">
+            <div>
+              <h2 className="lobby-title">Ready to join?</h2>
+              <p className="lobby-subtitle">
+                Set up your camera and microphone before entering the meeting.
+              </p>
             </div>
 
-            {/* Right Column — Info & Join */}
-            <div className="lobby-info">
-              <div>
-                <h2 className="lobby-title">Ready to join?</h2>
-                <p className="text-muted" style={{ marginTop: 'var(--space-2)' }}>
-                  Set up your camera and microphone audio before entering the meeting.
-                </p>
-              </div>
+            <div className="input-group">
+              <label>Your display name</label>
+              <input
+                type="text"
+                className="input"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="Enter your name"
+              />
+            </div>
 
-              <div className="room-id-display">
-                <span style={{ marginRight: '8px' }}>Room Code:</span>
-                <code>{roomId}</code>
-                <button 
-                  onClick={copyRoomLink} 
-                  className="btn btn-ghost btn-sm btn-icon"
-                  title="Copy share link"
-                >
-                  <Clipboard size={14} />
-                </button>
-              </div>
+            <div className="meeting-id-row">
+              <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Meeting ID</span>
+              <code>{roomId}</code>
+              <button 
+                onClick={copyMeetingId}
+                className={copied ? 'copied' : ''}
+                title="Copy Meeting ID"
+              >
+                {copied ? <Check size={16} /> : <Copy size={16} />}
+              </button>
+            </div>
 
-              <div className="flex flex-col gap-3">
-                <button 
-                  onClick={handleJoin} 
-                  className="btn btn-primary btn-lg w-full"
-                >
-                  <span>Join Meeting</span>
-                  <ArrowRight size={18} />
-                </button>
-                <button 
-                  onClick={() => navigate('/dashboard')} 
-                  className="btn btn-secondary w-full"
-                >
-                  <span>Back to Dashboard</span>
-                </button>
-              </div>
+            <div className="lobby-actions">
+              <button 
+                onClick={handleJoin} 
+                className="btn btn-primary btn-lg w-full"
+              >
+                <span>Join Now</span>
+                <ArrowRight size={18} />
+              </button>
+              <button 
+                onClick={() => navigate('/dashboard')} 
+                className="btn btn-secondary w-full"
+              >
+                <span>Back to Dashboard</span>
+              </button>
             </div>
           </div>
         </div>

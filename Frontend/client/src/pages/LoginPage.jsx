@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Video, Mail, Lock } from 'lucide-react';
+import { Mail, Lock, ArrowRight } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 const LoginPage = () => {
@@ -45,12 +45,15 @@ const LoginPage = () => {
 
   return (
     <div className="auth-page">
+      {/* Animated Background Orbs */}
+      <div className="orb orb-indigo"></div>
+      <div className="orb orb-cyan"></div>
+
       <div className="auth-card">
-        <Link to="/" className="navbar-logo" style={{ justifyContent: 'center', marginBottom: 'var(--space-6)' }}>
-          <div className="navbar-logo-icon">
-            <Video size={18} />
-          </div>
-          <span>MeetNow</span>
+        <Link to="/" className="navbar-logo" style={{ justifyContent: 'center', marginBottom: '32px' }}>
+          <span>MeetN</span>
+          <span className="logo-dot"></span>
+          <span>w</span>
         </Link>
 
         <h2 className="auth-title text-center">Welcome Back</h2>
@@ -68,9 +71,9 @@ const LoginPage = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                style={{ paddingLeft: '2.5rem' }}
+                style={{ paddingLeft: '44px' }}
               />
-              <Mail size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <Mail size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             </div>
           </div>
 
@@ -81,31 +84,45 @@ const LoginPage = () => {
                 type="password"
                 id="password"
                 className="input"
-                placeholder="••••••••"
+                placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                style={{ paddingLeft: '2.5rem' }}
+                style={{ paddingLeft: '44px' }}
               />
-              <Lock size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <Lock size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             </div>
           </div>
 
           <button 
             type="submit" 
             className="btn btn-primary w-full btn-lg" 
-            style={{ marginTop: 'var(--space-2)' }}
+            style={{ marginTop: '8px' }}
             disabled={isLoading}
           >
             {isLoading ? (
               <span className="spinner"></span>
             ) : (
-              <span>Sign In</span>
+              <>
+                <span>Sign In</span>
+                <ArrowRight size={18} />
+              </>
             )}
           </button>
         </form>
 
-        <div className="auth-divider">or</div>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '16px', 
+          margin: '24px 0',
+          color: 'var(--text-muted)',
+          fontSize: '13px'
+        }}>
+          <div style={{ flex: 1, height: '1px', background: 'var(--glass-border)' }}></div>
+          <span>or</span>
+          <div style={{ flex: 1, height: '1px', background: 'var(--glass-border)' }}></div>
+        </div>
 
         <button 
           onClick={handleDemoLogin} 
@@ -116,7 +133,7 @@ const LoginPage = () => {
         </button>
 
         <div className="auth-footer">
-          <span>Don't have an account? </span>
+          <span>{"Don't have an account? "}</span>
           <Link to="/signup">Create account</Link>
         </div>
       </div>

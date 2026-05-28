@@ -1,99 +1,116 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { Video, Shield, Monitor, Zap, Users, ArrowRight } from 'lucide-react';
+import { Video, Monitor, Zap, ArrowRight } from 'lucide-react';
 
 const LandingPage = () => {
   return (
-    <div>
+    <div className="landing-page">
       <Navbar />
       
       {/* Hero Section */}
-      <section className="landing-hero page-wrapper">
-        <div className="hero-badge">
-          <Zap size={14} />
-          <span>Next-Generation Video Conferencing</span>
+      <section className="landing-hero">
+        {/* Animated Background Orbs */}
+        <div className="hero-orbs">
+          <div className="orb orb-indigo"></div>
+          <div className="orb orb-cyan"></div>
         </div>
 
-        <h1 className="hero-title">
-          Connect instantly.<br />
-          Collaborate <span className="accent">seamlessly.</span>
-        </h1>
+        <div className="hero-content">
+          <h1 className="hero-title">
+            Meet Without Limits.
+          </h1>
 
-        <p className="hero-description">
-          MeetNow provides ultra-low latency audio, HD video, and secure screen sharing powered by Agora, wrapped in a beautiful, security-first architecture.
-        </p>
+          <p className="hero-description">
+            Crystal-clear HD video, instant screen sharing, and secure meeting rooms. 
+            Connect with anyone, anywhere — no downloads required.
+          </p>
 
-        <div className="hero-actions">
-          <Link to="/signup" className="btn btn-primary btn-lg">
-            <span>Get Started Free</span>
-            <ArrowRight size={18} />
-          </Link>
-          <Link to="/login" className="btn btn-secondary btn-lg">
-            <span>Try Demo Account</span>
-          </Link>
+          <div className="hero-actions">
+            <Link to="/signup" className="btn btn-primary btn-lg">
+              <span>Start Meeting</span>
+              <ArrowRight size={18} />
+            </Link>
+            <Link to="/login" className="btn btn-secondary btn-lg">
+              <span>Join a Meeting</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Mock Video Grid Visual */}
+        <div className="hero-visual">
+          <div className="mock-video-grid">
+            <div className="mock-video-tile">
+              <div className="mock-avatar">JD</div>
+            </div>
+            <div className="mock-video-tile">
+              <div className="mock-avatar">MK</div>
+            </div>
+            <div className="mock-video-tile">
+              <div className="mock-avatar">AR</div>
+            </div>
+            <div className="mock-video-tile">
+              <div className="mock-avatar">TS</div>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="landing-features">
+      <section id="features" className="landing-features">
         <div className="container">
-          <div style={{ textAlign: 'center', marginBottom: 'var(--space-12)' }}>
-            <h2 style={{ fontSize: 'var(--font-2xl)', marginBottom: 'var(--space-3)' }}>
-              Built for Modern Teams
-            </h2>
-            <p className="text-muted" style={{ maxWidth: '600px', margin: '0 auto' }}>
-              Designed to make virtual collaboration feel as natural and polished as meeting in person.
+          <div className="features-header">
+            <h2>Built for Modern Teams</h2>
+            <p>
+              Everything you need for seamless video collaboration, 
+              designed with security and simplicity in mind.
             </p>
           </div>
 
           <div className="features-grid">
-            {/* Feature 1 */}
+            {/* Feature 1 - HD Video */}
             <div className="feature-card">
               <div className="feature-icon">
                 <Video size={24} />
               </div>
-              <h3 className="feature-title">Agora HD Video</h3>
+              <h3 className="feature-title">HD Video</h3>
               <p className="feature-description">
-                Crystal clear, high-definition real-time WebRTC audio and video streaming with automatic bandwidth adaptation.
+                Crystal clear 1080p video for every call. Automatic bandwidth 
+                adaptation ensures smooth streaming even on slower connections.
               </p>
             </div>
 
-            {/* Feature 2 */}
-            <div className="feature-card">
-              <div className="feature-icon" style={{ backgroundColor: 'var(--success-soft)', color: 'var(--success)' }}>
-                <Shield size={24} />
-              </div>
-              <h3 className="feature-title">Spring Boot Security</h3>
-              <p className="feature-description">
-                Security-first backend with stateless JWT authorization, password hashing, and MongoDB document protection.
-              </p>
-            </div>
-
-            {/* Feature 3 */}
+            {/* Feature 2 - Screen Share */}
             <div className="feature-card">
               <div className="feature-icon">
                 <Monitor size={24} />
               </div>
-              <h3 className="feature-title">Screen Sharing</h3>
+              <h3 className="feature-title">Screen Share</h3>
               <p className="feature-description">
-                Share your entire screen or individual application windows in high-quality directly to the meeting room.
+                Share your entire screen or individual application windows 
+                with a single click. Perfect for presentations and demos.
               </p>
             </div>
 
-            {/* Feature 4 */}
+            {/* Feature 3 - Instant Rooms */}
             <div className="feature-card">
               <div className="feature-icon">
-                <Users size={24} />
+                <Zap size={24} />
               </div>
-              <h3 className="feature-title">Interactive Panels</h3>
+              <h3 className="feature-title">Instant Rooms</h3>
               <p className="feature-description">
-                In-call text chat, active participant lists, and meeting status overlays designed with smooth, responsive micro-animations.
+                No downloads required. Create a meeting room instantly and 
+                share the link — guests can join directly from their browser.
               </p>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="landing-footer">
+        <p>MeetNow — Premium video conferencing for modern teams.</p>
+      </footer>
     </div>
   );
 };

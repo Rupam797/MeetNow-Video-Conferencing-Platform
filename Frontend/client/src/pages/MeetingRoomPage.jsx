@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import Navbar from '../components/Navbar';
 import api from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import VideoTile from '../components/VideoTile';
@@ -8,7 +7,7 @@ import ControlBar from '../components/ControlBar';
 import ChatPanel from '../components/ChatPanel';
 import ParticipantPanel from '../components/ParticipantPanel';
 import { toast } from 'react-toastify';
-import { Clipboard, Video as VideoIcon } from 'lucide-react';
+import { Copy, Lock, Users } from 'lucide-react';
 import AgoraRTC, {
   AgoraRTCProvider,
   useJoin,
@@ -32,7 +31,6 @@ const MeetingRoomPage = () => {
   const [uid, setUid] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Read initial device states from lobby redirect
   const { initialMic = true, initialCamera = true } = location.state || {};
 
   useEffect(() => {
@@ -103,9 +101,35 @@ const MeetingRoomInner = ({
   const [chatOpen, setChatOpen] = useState(false);
   const [participantsOpen, setParticipantsOpen] = useState(false);
 
-  // Participant name registry: uid -> name
+  // Timer state
+  const [elapsedTime, setElapsedTime] = useState(0);
+
+  // Floating emojis
+  const [floatingEmojis, setFloatingEmojis] = useState([]);
+
+  // Participant name registry
   const [participantNames, setParticipantNames] = useState({});
   const pollIntervalRef = useRef(null);
+
+  // Timer effect
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setElapsedTime(prev => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTime = (seconds) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    if (hrs > 0) {
+      return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   // Register local user's name when joining
   useEffect(() => {
@@ -135,10 +159,7 @@ const MeetingRoomInner = ({
   }, [roomId]);
 
   useEffect(() => {
-    // Fetch immediately
     fetchParticipantNames();
-
-    // Then poll every 5 seconds
     pollIntervalRef.current = setInterval(fetchParticipantNames, 5000);
 
     return () => {
@@ -148,12 +169,11 @@ const MeetingRoomInner = ({
     };
   }, [fetchParticipantNames]);
 
-  // Helper to get display name for a remote user
   const getRemoteUserName = (remoteUid) => {
     return participantNames[String(remoteUid)] || `Participant ${remoteUid}`;
   };
 
-  // 1. Join the Agora RTC Channel
+  // Join Agora RTC Channel
   useJoin(
     {
       appid: appId,
@@ -164,24 +184,24 @@ const MeetingRoomInner = ({
     true
   );
 
-  // 2. Initialize local mic and camera tracks
+  // Initialize local tracks
   const { localMicrophoneTrack } = useLocalMicrophoneTrack(micActive);
   const { localCameraTrack } = useLocalCameraTrack(cameraActive);
 
-  // 3. Publish local video/audio tracks
+  // Publish local tracks
   usePublish([localMicrophoneTrack, localCameraTrack]);
 
-  // 4. Retrieve remote users in the channel and subscribe to their tracks
+  // Get remote users
   const remoteUsers = useRemoteUsers();
   const { audioTracks } = useRemoteAudioTracks(remoteUsers);
   useRemoteVideoTracks(remoteUsers);
 
-  // Re-fetch participant names when remote users list changes (new user joined/left)
+  // Re-fetch names when users change
   useEffect(() => {
     fetchParticipantNames();
   }, [remoteUsers.length, fetchParticipantNames]);
 
-  // 5. Play remote users' audio automatically
+  // Play remote audio
   useEffect(() => {
     audioTracks.forEach((track) => {
       if (track && !track.isPlaying) {
@@ -190,7 +210,7 @@ const MeetingRoomInner = ({
     });
   }, [audioTracks]);
 
-  // 6. Handle device activation changes
+  // Handle device toggles
   useEffect(() => {
     if (localMicrophoneTrack) {
       localMicrophoneTrack.setEnabled(micActive);
@@ -203,10 +223,9 @@ const MeetingRoomInner = ({
     }
   }, [cameraActive, localCameraTrack, screenShareActive]);
 
-  // 7. Screen Share toggle
+  // Screen share toggle
   const handleToggleScreenShare = async () => {
     if (screenShareActive) {
-      // Stop screen share
       if (screenTrack) {
         await client.unpublish(screenTrack);
         screenTrack.close();
@@ -214,26 +233,22 @@ const MeetingRoomInner = ({
       }
       setScreenShareActive(false);
       
-      // Re-enable camera track
       if (localCameraTrack && cameraActive) {
         await client.publish(localCameraTrack);
         localCameraTrack.setEnabled(true);
       }
     } else {
       try {
-        // Start screen share
         const track = await AgoraRTC.createScreenVideoTrack();
         setScreenTrack(track);
         setScreenShareActive(true);
 
-        // Unpublish camera track if active
         if (localCameraTrack) {
           await client.unpublish(localCameraTrack);
         }
 
         await client.publish(track);
 
-        // Listen for screen share stop from browser control
         track.on('track-ended', async () => {
           await client.unpublish(track);
           track.close();
@@ -254,8 +269,20 @@ const MeetingRoomInner = ({
     }
   };
 
+  // Emoji reaction handler
+  const handleSendEmoji = (emoji) => {
+    const id = Date.now();
+    const x = Math.random() * 60 + 20; // Random position 20-80% from left
+    
+    setFloatingEmojis(prev => [...prev, { id, emoji, x }]);
+
+    // Remove after animation completes
+    setTimeout(() => {
+      setFloatingEmojis(prev => prev.filter(e => e.id !== id));
+    }, 1200);
+  };
+
   const handleLeave = async () => {
-    // Unregister participant name
     try {
       await api.post('/api/meetings/participants/unregister', {
         channelName: roomId,
@@ -280,10 +307,10 @@ const MeetingRoomInner = ({
   const copyRoomLink = () => {
     const link = `${window.location.origin}/join/${roomId}`;
     navigator.clipboard.writeText(link);
-    toast.success('Room link copied to clipboard!');
+    toast.success('Room link copied!');
   };
 
-  // Determine grid layout CSS class
+  // Grid layout class
   const totalTiles = remoteUsers.length + 1;
   let gridClass = 'grid-1';
   if (totalTiles === 2) gridClass = 'grid-2';
@@ -293,44 +320,47 @@ const MeetingRoomInner = ({
 
   return (
     <div className="meeting-page">
-      {/* Topbar */}
+      {/* Top Bar */}
       <header className="meeting-topbar">
         <div className="meeting-topbar-left">
-          <div className="meeting-topbar-logo">
-            <VideoIcon size={16} style={{ color: 'var(--accent)' }} />
-            <span>MeetNow</span>
-          </div>
-          <div className="meeting-topbar-code">
-            <span>{roomId}</span>
-            <button 
-              onClick={copyRoomLink} 
-              className="btn btn-ghost btn-icon" 
-              style={{ width: '24px', height: '24px' }}
-              title="Copy Invite Link"
-            >
-              <Clipboard size={12} />
-            </button>
-          </div>
+          <span className="meeting-title">Team Standup</span>
+          <span className="meeting-timer">{formatTime(elapsedTime)}</span>
+          <button 
+            onClick={copyRoomLink}
+            className="btn btn-ghost btn-sm"
+            style={{ padding: '4px 8px' }}
+            title="Copy room link"
+          >
+            <Copy size={14} />
+            <span style={{ fontSize: '12px', fontFamily: 'var(--font-mono)' }}>{roomId.slice(0, 8)}...</span>
+          </button>
         </div>
         <div className="meeting-topbar-right">
-          <span>Connected as {user?.name || 'Guest'}</span>
+          <div className="encrypted-badge">
+            <Lock size={12} />
+            <span>Encrypted</span>
+          </div>
+          <div className="participant-count">
+            <Users size={14} />
+            <span>{remoteUsers.length + 1}</span>
+          </div>
         </div>
       </header>
 
-      {/* Main Grid Area */}
+      {/* Main Video Area */}
       <div className="meeting-body">
         <div className="meeting-video-area">
           <div className={`video-grid ${gridClass}`}>
-            {/* Local participant video tile */}
+            {/* Local participant tile */}
             <VideoTile
               track={screenShareActive ? screenTrack : localCameraTrack}
               isLocal={true}
-              name={`${user?.name || 'You'}${screenShareActive ? ' (Screen Share)' : ''}`}
+              name={`${user?.name || 'You'}${screenShareActive ? ' (Screen)' : ''}`}
               videoActive={screenShareActive ? true : cameraActive}
               audioActive={micActive}
             />
 
-            {/* Remote participants video tiles */}
+            {/* Remote participant tiles */}
             {remoteUsers.map((remoteUser) => (
               <VideoTile
                 key={remoteUser.uid}
@@ -358,7 +388,7 @@ const MeetingRoomInner = ({
         )}
       </div>
 
-      {/* Controls Footer */}
+      {/* Control Bar */}
       <ControlBar
         micActive={micActive}
         cameraActive={cameraActive}
@@ -377,7 +407,19 @@ const MeetingRoomInner = ({
           setChatOpen(false);
         }}
         onLeave={handleLeave}
+        onSendEmoji={handleSendEmoji}
       />
+
+      {/* Floating Emojis */}
+      {floatingEmojis.map(({ id, emoji, x }) => (
+        <div
+          key={id}
+          className="floating-emoji"
+          style={{ left: `${x}%`, bottom: '100px' }}
+        >
+          {emoji}
+        </div>
+      ))}
     </div>
   );
 };
