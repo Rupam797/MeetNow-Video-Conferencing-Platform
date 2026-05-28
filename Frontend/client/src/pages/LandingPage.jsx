@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '../components/Navbar';
 import {
   Video, Shield, Monitor, Zap, Users, ArrowRight, Star,
   ChevronRight, ChevronLeft, Globe, Check, Sparkles,
   MessageSquare, VolumeX, Volume2, FileText, Calendar,
-  Clock, Heart, HelpCircle, Facebook, Instagram
+  Facebook, Instagram
 } from 'lucide-react';
 
 const LandingPage = () => {
@@ -56,51 +57,102 @@ const LandingPage = () => {
     setActiveTestimonial((prev) => (prev - 1 + testimonials.length) % testimonials.length);
   };
 
+  // Framer Motion Animation Variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.12,
+        delayChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 25 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { type: "spring", stiffness: 100, damping: 16 }
+    }
+  };
+
+  const mockupVariants = {
+    hidden: { opacity: 0, scale: 0.96, y: 35 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      transition: { type: "spring", stiffness: 80, damping: 18, delay: 0.3 }
+    }
+  };
+
+  const testimonialVariants = {
+    enter: { opacity: 0, x: 25 },
+    center: { opacity: 1, x: 0, transition: { duration: 0.35, ease: "easeOut" } },
+    exit: { opacity: 0, x: -25, transition: { duration: 0.25, ease: "easeIn" } }
+  };
+
   return (
-    <div className="bg-theme-offwhite min-h-screen text-theme-charcoal selection:bg-theme-lime selection:text-theme-charcoal">
+    <div className="bg-theme-offwhite min-h-screen text-theme-charcoal selection:bg-theme-lime selection:text-theme-charcoal overflow-x-hidden">
       <Navbar />
 
       {/* ── HERO BANNER SECTION ── */}
       <section id="home" className="max-w-[1120px] mx-auto px-4 md:px-6 pt-32 pb-12 relative">
-        <div className="rounded-3xl bg-theme-charcoal text-theme-white p-8 md:p-16 relative overflow-hidden flex flex-col items-center text-center shadow-lg border border-theme-charcoal">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="rounded-3xl bg-theme-charcoal text-theme-white p-8 md:p-16 relative overflow-hidden flex flex-col items-center text-center shadow-lg border border-theme-charcoal"
+        >
           {/* Decorative subtle gradient glow */}
           <div className="absolute inset-0 bg-radial-gradient from-theme-olive/15 via-transparent to-transparent pointer-events-none"></div>
 
           {/* Highlight Badge */}
-          <div className="bg-theme-lime/10 border border-theme-lime/30 text-theme-lime px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider mb-6 flex items-center gap-1.5 animate-pulse">
-            <Sparkles size={14} className="text-theme-lime" />
+          <motion.div 
+            variants={itemVariants}
+            className="bg-theme-lime/10 border border-theme-lime/30 text-theme-lime px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider mb-6 flex items-center gap-1.5"
+          >
+            <Sparkles size={14} className="text-theme-lime animate-pulse" />
             <span>TRUSTED BY 50K+ TEAMS WORLDWIDE</span>
-          </div>
+          </motion.div>
 
           {/* Headline */}
-          <h1 className="font-[Outfit] text-4xl md:text-6xl font-extrabold tracking-tight max-w-3xl leading-[1.1] mb-6">
+          <motion.h1 
+            variants={itemVariants}
+            className="font-[Outfit] text-4xl md:text-6xl font-extrabold tracking-tight max-w-3xl leading-[1.1] mb-6"
+          >
             The Smartest Room in the <span className="text-theme-lime italic font-serif">Building is Online</span>
-          </h1>
+          </motion.h1>
 
           {/* Paragraph and rating */}
-          <p className="text-theme-lightgray max-w-xl text-base md:text-lg mb-8 leading-relaxed font-light">
+          <motion.p 
+            variants={itemVariants}
+            className="text-theme-lightgray max-w-xl text-base md:text-lg mb-8 leading-relaxed font-light"
+          >
             MeetNow transforms every meeting with real-time AI – live transcription, sentiment detection, smart summaries, and intelligent noise cancellation.
-          </p>
+          </motion.p>
 
           {/* Call to Actions */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-10 z-10">
+          <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 mb-10 z-10">
             <Link
               to="/signup"
-              className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-full bg-theme-lime hover:bg-theme-lime/90 text-theme-charcoal font-bold text-sm shadow-md transition-all active:scale-[0.98] no-underline"
+              className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-full bg-theme-lime hover:bg-theme-lime/90 text-theme-charcoal font-bold text-sm shadow-md transition-all hover:scale-105 active:scale-[0.98] no-underline"
             >
               <span>Get Started Free</span>
               <ArrowRight size={16} />
             </Link>
             <Link
               to="/login"
-              className="inline-flex items-center justify-center px-8 py-3 rounded-full border border-theme-lightgray/40 hover:border-theme-white text-theme-white font-semibold text-sm transition-all active:scale-[0.98] no-underline bg-transparent"
+              className="inline-flex items-center justify-center px-8 py-3 rounded-full border border-theme-lightgray/40 hover:border-theme-white text-theme-white font-semibold text-sm transition-all hover:scale-105 active:scale-[0.98] no-underline bg-transparent"
             >
               Try Demo Account
             </Link>
-          </div>
+          </motion.div>
 
           {/* User Ratings Overview */}
-          <div className="flex items-center gap-3 mb-12">
+          <motion.div variants={itemVariants} className="flex items-center gap-3 mb-12">
             <div className="flex -space-x-2">
               <span className="w-8 h-8 rounded-full border-2 border-theme-charcoal bg-theme-beige flex items-center justify-center text-[10px] font-bold text-theme-charcoal">KP</span>
               <span className="w-8 h-8 rounded-full border-2 border-theme-charcoal bg-theme-lightgray flex items-center justify-center text-[10px] font-bold text-theme-charcoal">MD</span>
@@ -117,10 +169,14 @@ const LandingPage = () => {
               </div>
               <span>from 12,000+ happy developers</span>
             </div>
-          </div>
+          </motion.div>
 
           {/* Interactive Laptop/Window Mockup */}
-          <div className="w-full max-w-[840px] rounded-2xl border-4 border-theme-lightgray/40 bg-theme-charcoal/95 overflow-hidden shadow-2xl transition-all duration-300 hover:scale-[1.01] text-left">
+          <motion.div 
+            variants={mockupVariants}
+            whileHover={{ y: -4, scale: 1.005, boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)" }}
+            className="w-full max-w-[840px] rounded-2xl border-4 border-theme-lightgray/40 bg-theme-charcoal/95 overflow-hidden shadow-2xl transition-all duration-300 text-left"
+          >
             {/* Mock Header */}
             <div className="bg-theme-charcoal border-b border-theme-lightgray/10 px-4 py-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -228,31 +284,58 @@ const LandingPage = () => {
                 End Call
               </button>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Bottom Overlapping Scroll Down Indicator (moved outside card to prevent overflow clipping) */}
-          <a
+          {/* Bottom Overlapping Scroll Down Indicator */}
+          <motion.a
             href="#transform"
-            className="absolute bottom-4 left-1/2 -translate-x-1/2 w-16 h-16 rounded-full bg-theme-lime hover:bg-theme-lime/90 flex items-center justify-center text-theme-charcoal shadow-md border-4 border-theme-offwhite cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95 z-10"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8, duration: 0.5 }}
+            whileHover={{ scale: 1.08, y: -2 }}
+            whileTap={{ scale: 0.95 }}
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 w-16 h-16 rounded-full bg-theme-lime hover:bg-theme-lime/90 flex items-center justify-center text-theme-charcoal shadow-md border-4 border-theme-offwhite cursor-pointer z-10"
             title="Scroll Down"
           >
-            <ChevronRight size={24} className="rotate-90 text-theme-charcoal" />
-          </a>
-        </div>
+            <motion.div
+              animate={{ y: [0, 5, 0] }}
+              transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
+            >
+              <ChevronRight size={24} className="rotate-90 text-theme-charcoal" />
+            </motion.div>
+          </motion.a>
+        </motion.div>
       </section>
 
       {/* ── INTRO TRANSFORMATION STATEMENT ── */}
-      <section id="transform" className="py-20 px-6 max-w-4xl mx-auto text-center border-b border-theme-lightgray/30">
+      <motion.section 
+        id="transform" 
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-120px" }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="py-20 px-6 max-w-4xl mx-auto text-center border-b border-theme-lightgray/30"
+      >
         <h2 className="font-[Outfit] text-2xl md:text-4xl font-extrabold leading-normal text-theme-charcoal">
           <span className="text-theme-olive font-serif">MeetNow</span> — transforms every meeting with real-time AI — <span className="text-theme-olive bg-theme-lime/30 px-2 py-0.5 rounded">live transcription</span>, sentiment detection, smart summaries, and intelligent noise cancellation. Your meetings, reimagined.
         </h2>
-      </section>
+      </motion.section>
 
       {/* ── METRICS/STATS BAR ── */}
-      <section className="py-12 max-w-[1120px] mx-auto px-4 md:px-6">
+      <motion.section 
+        variants={containerVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        className="py-12 max-w-[1120px] mx-auto px-4 md:px-6"
+      >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Stat 1 */}
-          <div className="bg-theme-charcoal text-theme-white p-6 rounded-2xl flex items-center gap-5 border border-theme-charcoal shadow-sm transition-transform duration-200 hover:-translate-y-1">
+          <motion.div 
+            variants={itemVariants}
+            whileHover={{ y: -6, scale: 1.01 }}
+            className="bg-theme-charcoal text-theme-white p-6 rounded-2xl flex items-center gap-5 border border-theme-charcoal shadow-sm transition-shadow duration-200"
+          >
             <div className="w-12 h-12 rounded-xl bg-theme-white/10 flex items-center justify-center text-theme-lime">
               <Users size={24} />
             </div>
@@ -260,10 +343,14 @@ const LandingPage = () => {
               <div className="text-3xl font-extrabold font-[Outfit] text-theme-white leading-tight">2M+</div>
               <div className="text-xs text-theme-lightgray uppercase tracking-wider font-semibold">Meetings Hosted</div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Stat 2 */}
-          <div className="bg-theme-lime text-theme-charcoal p-6 rounded-2xl flex items-center gap-5 border border-theme-olive/20 shadow-sm transition-transform duration-200 hover:-translate-y-1">
+          <motion.div 
+            variants={itemVariants}
+            whileHover={{ y: -6, scale: 1.01 }}
+            className="bg-theme-lime text-theme-charcoal p-6 rounded-2xl flex items-center gap-5 border border-theme-olive/20 shadow-sm transition-shadow duration-200"
+          >
             <div className="w-12 h-12 rounded-xl bg-theme-charcoal/10 flex items-center justify-center text-theme-charcoal">
               <Zap size={24} />
             </div>
@@ -271,10 +358,14 @@ const LandingPage = () => {
               <div className="text-3xl font-extrabold font-[Outfit] text-theme-charcoal leading-tight">0.3s</div>
               <div className="text-xs text-theme-charcoal/80 uppercase tracking-wider font-semibold">IR Response Time</div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Stat 3 */}
-          <div className="bg-theme-white text-theme-charcoal p-6 rounded-2xl flex items-center gap-5 border border-theme-lightgray shadow-sm transition-transform duration-200 hover:-translate-y-1">
+          <motion.div 
+            variants={itemVariants}
+            whileHover={{ y: -6, scale: 1.01 }}
+            className="bg-theme-white text-theme-charcoal p-6 rounded-2xl flex items-center gap-5 border border-theme-lightgray shadow-sm transition-shadow duration-200"
+          >
             <div className="w-12 h-12 rounded-xl bg-theme-offwhite flex items-center justify-center text-theme-olive">
               <Shield size={24} />
             </div>
@@ -282,14 +373,20 @@ const LandingPage = () => {
               <div className="text-3xl font-extrabold font-[Outfit] text-theme-charcoal leading-tight">98%</div>
               <div className="text-xs text-theme-charcoal/60 uppercase tracking-wider font-semibold">Satisfaction Rate</div>
             </div>
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ── AI FEATURES SECTION ── */}
       <section id="features" className="py-20 max-w-[1120px] mx-auto px-4 md:px-6">
         {/* Title Row */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6"
+        >
           <div className="flex flex-col items-start">
             <h2 className="text-4xl md:text-5xl font-extrabold font-[Outfit] text-theme-charcoal mb-4 tracking-tight leading-tight">
               AI that works<br />inside <span className="font-serif italic text-theme-olive">every meeting</span>
@@ -315,12 +412,22 @@ const LandingPage = () => {
               </p>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Feature Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-8"
+        >
           {/* Card 1: Noise Cancellation */}
-          <div className="bg-theme-white p-6 rounded-3xl border border-theme-lightgray flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-200">
+          <motion.div 
+            variants={itemVariants}
+            whileHover={{ y: -6, scale: 1.01 }}
+            className="bg-theme-white p-6 rounded-3xl border border-theme-lightgray flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow duration-200"
+          >
             <div>
               <div className="w-10 h-10 rounded-xl bg-theme-offwhite text-theme-charcoal flex items-center justify-center mb-4">
                 <VolumeX size={20} />
@@ -337,9 +444,13 @@ const LandingPage = () => {
                 <span className="text-[11px] font-bold text-theme-charcoal/80">Intelligent Filter</span>
                 <button
                   onClick={() => setIsNoiseFiltered(!isNoiseFiltered)}
-                  className={`w-10 h-6 rounded-full p-0.5 transition-colors cursor-pointer ${isNoiseFiltered ? 'bg-theme-lime' : 'bg-theme-lightgray'}`}
+                  className={`w-10 h-6 rounded-full p-0.5 transition-colors cursor-pointer relative ${isNoiseFiltered ? 'bg-theme-lime' : 'bg-theme-lightgray'}`}
                 >
-                  <div className={`w-5 h-5 rounded-full bg-theme-charcoal transition-transform duration-200 ${isNoiseFiltered ? 'translate-x-4' : 'translate-x-0'}`}></div>
+                  <motion.div 
+                    layout
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    className={`w-5 h-5 rounded-full bg-theme-charcoal ${isNoiseFiltered ? 'ml-auto' : 'mr-auto'}`}
+                  ></motion.div>
                 </button>
               </div>
 
@@ -351,11 +462,12 @@ const LandingPage = () => {
                   const finalHeight = Math.max(4, baseHeight + randomFactor);
 
                   return (
-                    <div
+                    <motion.div
                       key={idx}
-                      className={`w-1 rounded-full transition-all duration-300 ${isNoiseFiltered ? 'bg-theme-olive/30' : 'bg-theme-coral'}`}
+                      layout
+                      className={`w-1 rounded-full transition-colors duration-300 ${isNoiseFiltered ? 'bg-theme-olive/30' : 'bg-theme-coral'}`}
                       style={{ height: `${finalHeight}px` }}
-                    ></div>
+                    ></motion.div>
                   );
                 })}
               </div>
@@ -365,10 +477,14 @@ const LandingPage = () => {
                 <span className={isNoiseFiltered ? 'text-theme-olive' : ''}>Muted (Active)</span>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Card 2: AI Meeting Summaries */}
-          <div className="bg-theme-white p-6 rounded-3xl border border-theme-lightgray flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-200">
+          <motion.div 
+            variants={itemVariants}
+            whileHover={{ y: -6, scale: 1.01 }}
+            className="bg-theme-white p-6 rounded-3xl border border-theme-lightgray flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow duration-200"
+          >
             <div>
               <div className="w-10 h-10 rounded-xl bg-theme-offwhite text-theme-charcoal flex items-center justify-center mb-4">
                 <FileText size={20} />
@@ -396,10 +512,14 @@ const LandingPage = () => {
                 <span className="text-theme-charcoal/50">Schedule engineering review for Friday.</span>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Card 3: Live Transcription */}
-          <div className="bg-theme-white p-6 rounded-3xl border border-theme-lightgray flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-200">
+          <motion.div 
+            variants={itemVariants}
+            whileHover={{ y: -6, scale: 1.01 }}
+            className="bg-theme-white p-6 rounded-3xl border border-theme-lightgray flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow duration-200"
+          >
             <div>
               <div className="w-10 h-10 rounded-xl bg-theme-offwhite text-theme-charcoal flex items-center justify-center mb-4">
                 <MessageSquare size={20} />
@@ -428,21 +548,33 @@ const LandingPage = () => {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </section>
 
       {/* ── UNFAIR ADVANTAGE IN EVERY BOARDROOM ── */}
       <section className="py-20 bg-theme-white border-y border-theme-lightgray/40">
         <div className="max-w-[1120px] mx-auto px-4 md:px-6">
           {/* Header */}
-          <h2 className="font-[Outfit] text-center text-4xl md:text-5xl font-extrabold text-theme-charcoal mb-16 tracking-tight">
+          <motion.h2 
+            initial={{ opacity: 0, y: 25 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="font-[Outfit] text-center text-4xl md:text-5xl font-extrabold text-theme-charcoal mb-16 tracking-tight"
+          >
             Unfair Advantage <br /><span className="font-serif italic text-theme-olive">in Every Boardroom</span>
-          </h2>
+          </motion.h2>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Left Column: Mockups */}
-            <div className="flex flex-col gap-6">
+            <motion.div 
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6 }}
+              className="flex flex-col gap-6"
+            >
               {/* Meeting View Mockup */}
               <div className="bg-theme-charcoal p-4 rounded-3xl border border-theme-charcoal shadow-md overflow-hidden relative min-h-[220px] flex items-center justify-center">
                 {/* Simulated Grid Call */}
@@ -468,7 +600,10 @@ const LandingPage = () => {
               {/* Grid 2 Column for Small Badges */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {/* Card A: Stacked Avatars */}
-                <div className="bg-theme-offwhite border border-theme-lightgray/80 p-5 rounded-2xl flex items-center justify-between shadow-sm">
+                <motion.div 
+                  whileHover={{ scale: 1.02 }}
+                  className="bg-theme-offwhite border border-theme-lightgray/80 p-5 rounded-2xl flex items-center justify-between shadow-sm"
+                >
                   <div className="flex items-center gap-3">
                     <div className="flex -space-x-2">
                       <span className="w-8 h-8 rounded-full bg-theme-beige flex items-center justify-center text-[10px] font-bold border-2 border-theme-offwhite text-theme-charcoal">SJ</span>
@@ -478,10 +613,13 @@ const LandingPage = () => {
                     <span className="text-xs font-bold font-[Outfit] text-theme-charcoal">+12 Participants</span>
                   </div>
                   <div className="w-2.5 h-2.5 rounded-full bg-theme-lime"></div>
-                </div>
+                </motion.div>
 
                 {/* Card B: Mini Calendar Scheduling */}
-                <div className="bg-theme-charcoal text-theme-white p-5 rounded-2xl flex items-center gap-3.5 border border-theme-charcoal shadow-sm">
+                <motion.div 
+                  whileHover={{ scale: 1.02 }}
+                  className="bg-theme-charcoal text-theme-white p-5 rounded-2xl flex items-center gap-3.5 border border-theme-charcoal shadow-sm"
+                >
                   <div className="w-9 h-9 rounded-xl bg-theme-white/10 flex items-center justify-center text-theme-lime">
                     <Calendar size={18} />
                   </div>
@@ -489,12 +627,18 @@ const LandingPage = () => {
                     <div className="text-[10px] uppercase font-bold text-theme-lime tracking-widest leading-none mb-1">MeetNow Day 30</div>
                     <div className="text-xs text-theme-white/90 font-medium font-[Outfit]">Annual Board Meeting</div>
                   </div>
-                </div>
+                </motion.div>
               </div>
-            </div>
+            </motion.div>
 
             {/* Right Column: Descriptions & Details */}
-            <div className="flex flex-col justify-between">
+            <motion.div 
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6 }}
+              className="flex flex-col justify-between"
+            >
               {/* Translations list */}
               <div className="bg-theme-offwhite p-6 rounded-3xl border border-theme-lightgray/80 shadow-sm mb-6">
                 <div className="flex items-center gap-2 mb-4">
@@ -504,14 +648,16 @@ const LandingPage = () => {
 
                 <div className="flex flex-wrap gap-2">
                   {languages.map((lang) => (
-                    <button
+                    <motion.button
                       key={lang.name}
                       onClick={() => setSelectedLang(lang.name)}
-                      className={`px-4 py-1.5 rounded-full text-xs font-bold tracking-tight transition-all cursor-pointer ${selectedLang === lang.name ? 'bg-theme-charcoal text-theme-lime' : 'bg-theme-white border border-theme-lightgray text-theme-charcoal/80 hover:border-theme-charcoal/60'}`}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className={`px-4 py-1.5 rounded-full text-xs font-bold tracking-tight transition-all cursor-pointer ${selectedLang === lang.name ? 'bg-theme-charcoal text-theme-lime font-bold' : 'bg-theme-white border border-theme-lightgray text-theme-charcoal/80 hover:border-theme-charcoal/60'}`}
                     >
                       <span className="mr-1">{lang.flag}</span>
                       <span>{lang.name}</span>
-                    </button>
+                    </motion.button>
                   ))}
                 </div>
               </div>
@@ -542,7 +688,7 @@ const LandingPage = () => {
                   <ArrowRight size={14} />
                 </Link>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -551,9 +697,14 @@ const LandingPage = () => {
       <section className="py-20 max-w-[1120px] mx-auto px-4 md:px-6">
         {/* Title row */}
         <div className="flex justify-between items-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-extrabold font-[Outfit] text-theme-charcoal tracking-tight">
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-3xl md:text-4xl font-extrabold font-[Outfit] text-theme-charcoal tracking-tight"
+          >
             Results That <span className="font-serif italic text-theme-olive">Speak for Themselves</span>
-          </h2>
+          </motion.h2>
           <div className="flex gap-2">
             <button
               onClick={handlePrevTestimonial}
@@ -571,31 +722,42 @@ const LandingPage = () => {
         </div>
 
         {/* Carousel card */}
-        <div className="bg-theme-white border border-theme-lightgray p-8 rounded-3xl flex flex-col md:flex-row items-center gap-8 shadow-sm transition-all duration-300">
-          <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl bg-theme-beige flex items-center justify-center text-theme-charcoal font-[Outfit] text-3xl font-extrabold shadow-sm flex-shrink-0">
-            {testimonials[activeTestimonial].initials}
-          </div>
+        <div className="bg-theme-white border border-theme-lightgray p-8 rounded-3xl shadow-sm min-h-[220px] flex items-center">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTestimonial}
+              variants={testimonialVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              className="flex flex-col md:flex-row items-center gap-8 w-full"
+            >
+              <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl bg-theme-beige flex items-center justify-center text-theme-charcoal font-[Outfit] text-3xl font-extrabold shadow-sm flex-shrink-0">
+                {testimonials[activeTestimonial].initials}
+              </div>
 
-          <div className="flex-grow text-center md:text-left">
-            <div className="flex justify-center md:justify-start text-theme-olive mb-3 gap-0.5">
-              {Array.from({ length: testimonials[activeTestimonial].stars }).map((_, idx) => (
-                <Star key={idx} size={15} fill="currentColor" className="text-theme-olive" />
-              ))}
-            </div>
+              <div className="flex-grow text-center md:text-left">
+                <div className="flex justify-center md:justify-start text-theme-olive mb-3 gap-0.5">
+                  {Array.from({ length: testimonials[activeTestimonial].stars }).map((_, idx) => (
+                    <Star key={idx} size={15} fill="currentColor" className="text-theme-olive" />
+                  ))}
+                </div>
 
-            <blockquote className="text-lg md:text-xl font-medium font-[Outfit] text-theme-charcoal leading-relaxed mb-4">
-              "{testimonials[activeTestimonial].quote}"
-            </blockquote>
+                <blockquote className="text-lg md:text-xl font-medium font-[Outfit] text-theme-charcoal leading-relaxed mb-4">
+                  "{testimonials[activeTestimonial].quote}"
+                </blockquote>
 
-            <div>
-              <cite className="not-italic font-bold text-sm text-theme-charcoal block">
-                {testimonials[activeTestimonial].author}
-              </cite>
-              <span className="text-xs text-theme-charcoal/50">
-                {testimonials[activeTestimonial].role}
-              </span>
-            </div>
-          </div>
+                <div>
+                  <cite className="not-italic font-bold text-sm text-theme-charcoal block">
+                    {testimonials[activeTestimonial].author}
+                  </cite>
+                  <span className="text-xs text-theme-charcoal/50">
+                    {testimonials[activeTestimonial].role}
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+          </AnimatePresence>
         </div>
 
         {/* Logos footer grid */}
@@ -616,32 +778,61 @@ const LandingPage = () => {
         <div className="max-w-[1120px] mx-auto px-4 md:px-6">
           {/* Header */}
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-extrabold font-[Outfit] text-theme-charcoal mb-4 tracking-tight">
+            <motion.h2 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-4xl md:text-5xl font-extrabold font-[Outfit] text-theme-charcoal mb-4 tracking-tight"
+            >
               One Plan Away <br /><span className="font-serif italic text-theme-olive">from Better Meetings</span>
-            </h2>
+            </motion.h2>
 
             {/* Toggle pricing cycle */}
-            <div className="inline-flex items-center gap-1.5 bg-theme-offwhite p-1 rounded-full border border-theme-lightgray/60 mt-4">
+            <div className="inline-flex items-center gap-1.5 bg-theme-offwhite p-1 rounded-full border border-theme-lightgray/60 mt-4 relative">
               <button
                 onClick={() => setBillingCycle('monthly')}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold tracking-tight transition-all cursor-pointer ${billingCycle === 'monthly' ? 'bg-theme-charcoal text-theme-lime' : 'bg-transparent text-theme-charcoal/70'}`}
+                className={`relative px-4 py-1.5 rounded-full text-xs font-bold tracking-tight transition-all cursor-pointer z-10 ${billingCycle === 'monthly' ? 'text-theme-lime' : 'text-theme-charcoal/70'}`}
               >
+                {billingCycle === 'monthly' && (
+                  <motion.div
+                    layoutId="activeBilling"
+                    className="absolute inset-0 bg-theme-charcoal rounded-full -z-10"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
                 Monthly
               </button>
               <button
                 onClick={() => setBillingCycle('annually')}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold tracking-tight transition-all cursor-pointer flex items-center gap-1.5 ${billingCycle === 'annually' ? 'bg-theme-charcoal text-theme-lime' : 'bg-transparent text-theme-charcoal/70'}`}
+                className={`relative px-4 py-1.5 rounded-full text-xs font-bold tracking-tight transition-all cursor-pointer flex items-center gap-1.5 z-10 ${billingCycle === 'annually' ? 'text-theme-lime' : 'text-theme-charcoal/70'}`}
               >
+                {billingCycle === 'annually' && (
+                  <motion.div
+                    layoutId="activeBilling"
+                    className="absolute inset-0 bg-theme-charcoal rounded-full -z-10"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
                 <span>Annually</span>
-                <span className="bg-theme-lime text-theme-charcoal text-[9px] font-extrabold px-1.5 py-0.5 rounded">SAVE 20%</span>
+                <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded transition-colors duration-200 ${billingCycle === 'annually' ? 'bg-theme-lime text-theme-charcoal' : 'bg-theme-lime/20 text-theme-charcoal/70'}`}>SAVE 20%</span>
               </button>
             </div>
           </div>
 
           {/* Pricing Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch pt-4">
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch pt-4"
+          >
             {/* Card 1: Starter */}
-            <div className="bg-theme-offwhite border border-theme-lightgray/60 p-8 rounded-3xl flex flex-col justify-between shadow-sm transition-transform duration-200 hover:-translate-y-1">
+            <motion.div 
+              variants={itemVariants}
+              whileHover={{ y: -8, scale: 1.015 }}
+              className="bg-theme-offwhite border border-theme-lightgray/60 p-8 rounded-3xl flex flex-col justify-between shadow-sm transition-all duration-200"
+            >
               <div>
                 <span className="text-xs font-bold uppercase tracking-widest text-theme-charcoal/55">Starter</span>
                 <p className="text-xs text-theme-charcoal/50 mt-1 mb-6">Perfect for individuals and small test projects.</p>
@@ -678,10 +869,14 @@ const LandingPage = () => {
               >
                 Get Started Free
               </Link>
-            </div>
+            </motion.div>
 
-            {/* Card 2: Professional (LIME HIGHLIGHT ACTIVE CARD) */}
-            <div className="bg-theme-lime border border-theme-olive/30 p-8 rounded-3xl flex flex-col justify-between shadow-lg transform md:-translate-y-4 transition-transform duration-200">
+            {/* Card 2: Professional */}
+            <motion.div 
+              variants={itemVariants}
+              whileHover={{ y: -16, scale: 1.025, boxShadow: "0 25px 30px -5px rgba(219,234,141,0.18)" }}
+              className="bg-theme-lime border border-theme-olive/30 p-8 rounded-3xl flex flex-col justify-between shadow-lg transform md:-translate-y-4 transition-all duration-200"
+            >
               <div>
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-xs font-bold uppercase tracking-widest text-theme-charcoal">Professional</span>
@@ -727,10 +922,14 @@ const LandingPage = () => {
               >
                 Free Trial for 14 Days
               </Link>
-            </div>
+            </motion.div>
 
             {/* Card 3: Enterprise */}
-            <div className="bg-theme-offwhite border border-theme-lightgray/60 p-8 rounded-3xl flex flex-col justify-between shadow-sm transition-transform duration-200 hover:-translate-y-1">
+            <motion.div 
+              variants={itemVariants}
+              whileHover={{ y: -8, scale: 1.015 }}
+              className="bg-theme-offwhite border border-theme-lightgray/60 p-8 rounded-3xl flex flex-col justify-between shadow-sm transition-all duration-200"
+            >
               <div>
                 <span className="text-xs font-bold uppercase tracking-widest text-theme-charcoal/55">Enterprise</span>
                 <p className="text-xs text-theme-charcoal/50 mt-1 mb-6">Custom features and dedicated infrastructure.</p>
@@ -766,14 +965,20 @@ const LandingPage = () => {
               >
                 Contact Sales
               </Link>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
       {/* ── BOTTOM CTA BANNER ── */}
       <section className="max-w-[1120px] mx-auto px-4 md:px-6 py-12">
-        <div className="rounded-3xl bg-theme-charcoal text-theme-white p-8 md:p-16 relative overflow-hidden flex flex-col items-center text-center shadow-lg border border-theme-charcoal">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.98 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="rounded-3xl bg-theme-charcoal text-theme-white p-8 md:p-16 relative overflow-hidden flex flex-col items-center text-center shadow-lg border border-theme-charcoal"
+        >
           {/* Subtle clouds background representation in custom theme */}
           <div className="absolute inset-0 bg-gradient-to-br from-theme-charcoal via-theme-olive/10 to-theme-charcoal pointer-events-none"></div>
 
@@ -792,13 +997,13 @@ const LandingPage = () => {
           <div className="z-10">
             <Link
               to="/signup"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-theme-lime hover:bg-theme-lime/90 text-theme-charcoal font-extrabold text-sm shadow-md transition-all active:scale-[0.98] no-underline"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-theme-lime hover:bg-theme-lime/90 text-theme-charcoal font-extrabold text-sm shadow-md transition-all hover:scale-105 active:scale-[0.98] no-underline"
             >
               <span>Start Free Trial</span>
               <ArrowRight size={16} />
             </Link>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* ── FOOTER ── */}
@@ -851,7 +1056,7 @@ const LandingPage = () => {
             <div className="grid grid-cols-3 gap-6 text-left">
               <div>
                 <h4 className="text-xs font-semibold text-theme-white mb-4">Quick Links</h4>
-                <ul className="space-y-3 text-xs text-theme-lightgray/60">
+                <ul className="space-y-3 text-xs text-theme-lightgray/60 list-none p-0 m-0">
                   <li><a href="#home" className="hover:text-theme-white hover:scale-[1.01] inline-block transition-all no-underline">Home</a></li>
                   <li><a href="#features" className="hover:text-theme-white hover:scale-[1.01] inline-block transition-all no-underline">Features</a></li>
                   <li><a href="#pricing" className="hover:text-theme-white hover:scale-[1.01] inline-block transition-all no-underline">Pricing Plan</a></li>
@@ -862,7 +1067,7 @@ const LandingPage = () => {
 
               <div>
                 <h4 className="text-xs font-semibold text-theme-white mb-4">Resources</h4>
-                <ul className="space-y-3 text-xs text-theme-lightgray/60">
+                <ul className="space-y-3 text-xs text-theme-lightgray/60 list-none p-0 m-0">
                   <li><a href="#" className="hover:text-theme-white hover:scale-[1.01] inline-block transition-all no-underline">Help Center</a></li>
                   <li><a href="#" className="hover:text-theme-white hover:scale-[1.01] inline-block transition-all no-underline">Documentation</a></li>
                   <li><a href="#" className="hover:text-theme-white hover:scale-[1.01] inline-block transition-all no-underline">Security</a></li>
@@ -873,7 +1078,7 @@ const LandingPage = () => {
 
               <div>
                 <h4 className="text-xs font-semibold text-theme-white mb-4">Support</h4>
-                <ul className="space-y-3 text-xs text-theme-lightgray/60">
+                <ul className="space-y-3 text-xs text-theme-lightgray/60 list-none p-0 m-0">
                   <li><a href="#" className="hover:text-theme-white hover:scale-[1.01] inline-block transition-all no-underline">Live Chat</a></li>
                   <li><a href="#" className="hover:text-theme-white hover:scale-[1.01] inline-block transition-all no-underline">Customer Support</a></li>
                   <li><a href="#" className="hover:text-theme-white hover:scale-[1.01] inline-block transition-all no-underline">Report an Issue</a></li>
