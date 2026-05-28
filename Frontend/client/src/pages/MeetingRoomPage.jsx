@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import Navbar from '../components/Navbar';
 import api from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import VideoTile from '../components/VideoTile';
@@ -8,7 +7,7 @@ import ControlBar from '../components/ControlBar';
 import ChatPanel from '../components/ChatPanel';
 import ParticipantPanel from '../components/ParticipantPanel';
 import { toast } from 'react-toastify';
-import { Clipboard, Video as VideoIcon } from 'lucide-react';
+import { Clipboard, Video as VideoIcon, ArrowLeft, Share2, Menu } from 'lucide-react';
 import AgoraRTC, {
   AgoraRTCProvider,
   useJoin,
@@ -61,9 +60,11 @@ const MeetingRoomPage = () => {
 
   if (loading) {
     return (
-      <div className="loading-screen">
-        <div className="loading-spinner-lg"></div>
-        <p>Connecting to secure meeting channel...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-tertiary">
+        <div className="w-10 h-10 border-3 border-surface border-t-brand rounded-full animate-spin" />
+        <p className="text-offwhite/50 font-[Outfit] text-sm tracking-wide">
+          Connecting to secure meeting channel...
+        </p>
       </div>
     );
   }
@@ -283,49 +284,77 @@ const MeetingRoomInner = ({
     toast.success('Room link copied to clipboard!');
   };
 
-  // Determine grid layout CSS class
+  // Determine grid layout
   const totalTiles = remoteUsers.length + 1;
-  let gridClass = 'grid-1';
-  if (totalTiles === 2) gridClass = 'grid-2';
-  else if (totalTiles === 3) gridClass = 'grid-3';
-  else if (totalTiles === 4) gridClass = 'grid-4';
-  else if (totalTiles > 4) gridClass = 'grid-many';
+  const getGridCols = () => {
+    if (totalTiles === 1) return 'grid-cols-1';
+    if (totalTiles === 2) return 'grid-cols-2';
+    if (totalTiles <= 4) return 'grid-cols-2';
+    return 'grid-cols-3';
+  };
 
   return (
-    <div className="meeting-page">
-      {/* Topbar */}
-      <header className="meeting-topbar">
-        <div className="meeting-topbar-left">
-          <div className="meeting-topbar-logo">
-            <VideoIcon size={16} style={{ color: 'var(--accent)' }} />
-            <span>MeetNow</span>
+    <div className="h-screen w-screen flex flex-col bg-tertiary overflow-hidden font-[Outfit]">
+      
+      {/* ── Topbar ── */}
+      <header className="flex items-center justify-between px-4 h-14 bg-secondary/80 backdrop-blur-xl border-b border-border-primary/45 shrink-0 z-20">
+        {/* Left side — Back + Meeting info */}
+        <div className="flex items-center gap-3">
+          {/* Back button */}
+          <button 
+            onClick={() => navigate('/dashboard')}
+            className="w-9 h-9 rounded-full bg-surface hover:bg-surface-hover flex items-center justify-center text-offwhite transition-all duration-150 cursor-pointer"
+          >
+            <ArrowLeft size={16} />
+          </button>
+          
+          {/* Meeting title pill */}
+          <div className="flex items-center gap-2.5 px-4 py-1.5 bg-surface/60 rounded-full border border-border-primary/40">
+            <div className="w-2 h-2 rounded-full bg-brand animate-pulse" />
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-white leading-tight">
+                Team Meeting
+              </span>
+              <span className="text-[10px] text-offwhite/50 leading-tight">
+                Host <span className="text-brand">{user?.name || 'You'}</span>
+              </span>
+            </div>
           </div>
-          <div className="meeting-topbar-code">
-            <span>{roomId}</span>
-            <button 
-              onClick={copyRoomLink} 
-              className="btn btn-ghost btn-icon" 
-              style={{ width: '24px', height: '24px' }}
-              title="Copy Invite Link"
-            >
-              <Clipboard size={12} />
-            </button>
-          </div>
+
+          {/* Share button */}
+          <button 
+            onClick={copyRoomLink}
+            className="w-9 h-9 rounded-full bg-brand text-secondary flex items-center justify-center hover:bg-brand-hover transition-all duration-150 active:scale-95 shadow-md shadow-brand/20 cursor-pointer"
+            title="Copy Invite Link"
+          >
+            <Share2 size={14} />
+          </button>
         </div>
-        <div className="meeting-topbar-right">
-          <span>Connected as {user?.name || 'Guest'}</span>
+
+        {/* Right side — User avatar + menu */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-offwhite/50 hidden sm:inline mr-1">
+            {user?.name || 'Guest'}
+          </span>
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand to-brand-hover text-secondary text-xs font-bold shadow-md shadow-brand/25">
+            {user?.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : 'U'}
+          </div>
+          <button className="w-9 h-9 rounded-full bg-surface hover:bg-surface-hover flex items-center justify-center text-offwhite transition-all duration-150 cursor-pointer">
+            <Menu size={16} />
+          </button>
         </div>
       </header>
 
-      {/* Main Grid Area */}
-      <div className="meeting-body">
-        <div className="meeting-video-area">
-          <div className={`video-grid ${gridClass}`}>
+      {/* ── Main Body ── */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Video Grid Area */}
+        <div className="flex-1 p-3 pb-24 overflow-auto">
+          <div className={`grid ${getGridCols()} gap-3 h-full auto-rows-fr`}>
             {/* Local participant video tile */}
             <VideoTile
               track={screenShareActive ? screenTrack : localCameraTrack}
               isLocal={true}
-              name={`${user?.name || 'You'}${screenShareActive ? ' (Screen Share)' : ''}`}
+              name={`${user?.name || 'You'}${screenShareActive ? ' (Screen)' : ''}`}
               videoActive={screenShareActive ? true : cameraActive}
               audioActive={micActive}
             />
@@ -358,7 +387,7 @@ const MeetingRoomInner = ({
         )}
       </div>
 
-      {/* Controls Footer */}
+      {/* Controls Footer — floating, rendered by ControlBar */}
       <ControlBar
         micActive={micActive}
         cameraActive={cameraActive}

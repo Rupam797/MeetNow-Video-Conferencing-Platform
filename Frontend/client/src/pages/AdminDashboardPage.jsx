@@ -5,7 +5,7 @@ import api from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { 
   Users, Video, Activity, ShieldAlert, Trash2, Search, 
-  ArrowLeft, CheckCircle, XCircle, UserCheck, LayoutDashboard, Plus, Clipboard, Link as LinkIcon
+  ArrowLeft, UserCheck, LayoutDashboard, Plus, Clipboard, Link as LinkIcon
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 
@@ -17,17 +17,14 @@ const AdminDashboardPage = () => {
   const [users, setUsers] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview'); // overview, users, rooms
+  const [activeTab, setActiveTab] = useState('overview');
 
-  // Search/Filter states
   const [userSearch, setUserSearch] = useState('');
   const [roomSearch, setRoomSearch] = useState('');
 
-  // Delete confirm modal states
   const [deleteUserModal, setDeleteUserModal] = useState({ show: false, userId: null, userName: '' });
   const [deleteRoomModal, setDeleteRoomModal] = useState({ show: false, roomId: null });
 
-  // Quick room creation states
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const [createdRoom, setCreatedRoom] = useState(null);
 
@@ -61,8 +58,6 @@ const AdminDashboardPage = () => {
       await api.put(`/api/admin/users/${userId}/role`, { role: newRole });
       toast.success(`Role updated successfully to ${newRole}`);
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
-      
-      // Update local stats role distribution dynamically
       const statsRes = await api.get('/api/admin/stats');
       setStats(statsRes.data);
     } catch (err) {
@@ -71,13 +66,8 @@ const AdminDashboardPage = () => {
     }
   };
 
-  const openDeleteUserConfirm = (id, name) => {
-    setDeleteUserModal({ show: true, userId: id, userName: name });
-  };
-
-  const closeDeleteUserConfirm = () => {
-    setDeleteUserModal({ show: false, userId: null, userName: '' });
-  };
+  const openDeleteUserConfirm = (id, name) => setDeleteUserModal({ show: true, userId: id, userName: name });
+  const closeDeleteUserConfirm = () => setDeleteUserModal({ show: false, userId: null, userName: '' });
 
   const handleDeleteUser = async () => {
     const { userId } = deleteUserModal;
@@ -86,7 +76,6 @@ const AdminDashboardPage = () => {
       toast.success('User account deleted successfully.');
       setUsers(prev => prev.filter(u => u.id !== userId));
       closeDeleteUserConfirm();
-
       const statsRes = await api.get('/api/admin/stats');
       setStats(statsRes.data);
     } catch (err) {
@@ -95,13 +84,8 @@ const AdminDashboardPage = () => {
     }
   };
 
-  const openDeleteRoomConfirm = (roomId) => {
-    setDeleteRoomModal({ show: true, roomId: roomId });
-  };
-
-  const closeDeleteRoomConfirm = () => {
-    setDeleteRoomModal({ show: false, roomId: null });
-  };
+  const openDeleteRoomConfirm = (roomId) => setDeleteRoomModal({ show: true, roomId });
+  const closeDeleteRoomConfirm = () => setDeleteRoomModal({ show: false, roomId: null });
 
   const handleDeleteRoom = async () => {
     const { roomId } = deleteRoomModal;
@@ -110,7 +94,6 @@ const AdminDashboardPage = () => {
       toast.success('Meeting room ended and deleted.');
       setRooms(prev => prev.filter(r => r.roomId !== roomId));
       closeDeleteRoomConfirm();
-
       const statsRes = await api.get('/api/admin/stats');
       setStats(statsRes.data);
     } catch (err) {
@@ -138,11 +121,7 @@ const AdminDashboardPage = () => {
       });
       if (response.data.roomId) {
         toast.success('Quick meeting room created.');
-        setCreatedRoom({
-          code,
-          link: `${window.location.origin}/join/${code}`
-        });
-
+        setCreatedRoom({ code, link: `${window.location.origin}/join/${code}` });
         const [roomsRes, statsRes] = await Promise.all([
           api.get('/api/admin/rooms'),
           api.get('/api/admin/stats')
@@ -163,7 +142,6 @@ const AdminDashboardPage = () => {
     toast.success('Copied to clipboard!');
   };
 
-  // Filters logic
   const filteredUsers = users.filter(u => 
     u.name?.toLowerCase().includes(userSearch.toLowerCase()) || 
     u.email?.toLowerCase().includes(userSearch.toLowerCase())
@@ -176,164 +154,154 @@ const AdminDashboardPage = () => {
 
   if (loading) {
     return (
-      <div className="loading-screen">
-        <div className="loading-spinner-lg"></div>
-        <p>Loading Admin Dashboard...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-offwhite dark:bg-primary text-secondary dark:text-offwhite/70 transition-colors duration-300">
+        <div className="w-10 h-10 border-3 border-gray-200 border-t-brand dark:border-border-primary dark:border-t-brand rounded-full animate-spin" />
+        <p className="font-[Outfit]">Loading Admin Dashboard...</p>
       </div>
     );
   }
 
   return (
-    <div className="page-wrapper" style={{ backgroundColor: 'var(--bg-primary)', minHeight: '100vh' }}>
+    <div className="min-h-screen pt-16 bg-offwhite dark:bg-primary text-primary dark:text-white transition-colors duration-300">
       <Navbar />
 
-      <div className="container" style={{ paddingTop: 'var(--space-10)', paddingBottom: 'var(--space-16)' }}>
+      <div className="max-w-[1120px] mx-auto px-6 pt-10 pb-16">
         {/* Admin Header */}
-        <div className="flex justify-between items-center" style={{ marginBottom: 'var(--space-8)' }}>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
-            <div className="flex items-center gap-2" style={{ color: 'var(--accent-text)', marginBottom: 'var(--space-2)' }}>
+            <div className="flex items-center gap-2 mb-2 text-brand">
               <LayoutDashboard size={18} />
-              <span style={{ fontSize: 'var(--font-sm)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                System Administration
-              </span>
+              <span className="text-sm font-semibold uppercase tracking-wider font-[Outfit]">System Administration</span>
             </div>
-            <h1 style={{ fontSize: 'var(--font-3xl)', fontWeight: '800' }}>Admin Dashboard</h1>
-            <p className="text-muted">Manage system users, meeting rooms, and monitor platform health.</p>
+            <h1 className="text-3xl font-extrabold font-[Outfit]">Admin Dashboard</h1>
+            <p className="text-sm text-secondary dark:text-offwhite/60 font-[Outfit]">Manage system users, meeting rooms, and monitor platform health.</p>
           </div>
-          <button onClick={() => navigate('/dashboard')} className="btn btn-secondary">
+          <button 
+            onClick={() => navigate('/dashboard')} 
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl border border-gray-300 dark:border-border-primary bg-transparent hover:border-primary dark:hover:border-white hover:bg-gray-50 dark:hover:bg-surface-hover text-primary dark:text-white transition-all duration-150 cursor-pointer font-[Outfit]"
+          >
             <ArrowLeft size={16} />
             <span>User Portal</span>
           </button>
         </div>
 
         {/* Metrics Cards Grid */}
-        <div className="admin-stats-grid" style={{ marginBottom: 'var(--space-10)' }}>
-          <div className="admin-stat-card">
-            <div className="admin-stat-icon users">
-              <Users size={20} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+          {[
+            { label: 'Total Users', value: stats.totalUsers, icon: <Users size={20} />, bgColor: 'bg-brand-soft', iconColor: 'text-brand' },
+            { label: 'Total Rooms', value: stats.totalRooms, icon: <Video size={20} />, bgColor: 'bg-purple-soft', iconColor: 'text-purple' },
+            { label: 'Active Rooms', value: stats.activeRooms, icon: <Activity size={20} />, bgColor: 'bg-brand-soft', iconColor: 'text-brand' },
+            { label: 'Inactive Rooms', value: stats.inactiveRooms, icon: <ShieldAlert size={20} />, bgColor: 'bg-coral-soft', iconColor: 'text-coral' },
+          ].map((stat) => (
+            <div key={stat.label} className="flex items-center gap-4 p-5 rounded-2xl border border-gray-200 dark:border-border-primary/60 bg-white dark:bg-secondary transition-all duration-300 hover:border-brand dark:hover:border-brand hover:-translate-y-0.5 shadow-sm hover:shadow-md">
+              <div className={`w-[42px] h-[42px] rounded-xl flex items-center justify-center ${stat.bgColor} ${stat.iconColor}`}>
+                {stat.icon}
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs uppercase tracking-wider font-[Outfit] text-secondary dark:text-offwhite/50">{stat.label}</span>
+                <span className="text-xl font-bold leading-tight mt-1 font-[Outfit]">{stat.value}</span>
+              </div>
             </div>
-            <div className="admin-stat-content">
-              <span className="admin-stat-label">Total Users</span>
-              <span className="admin-stat-value">{stats.totalUsers}</span>
-            </div>
-          </div>
-
-          <div className="admin-stat-card">
-            <div className="admin-stat-icon rooms">
-              <Video size={20} />
-            </div>
-            <div className="admin-stat-content">
-              <span className="admin-stat-label">Total Rooms</span>
-              <span className="admin-stat-value">{stats.totalRooms}</span>
-            </div>
-          </div>
-
-          <div className="admin-stat-card">
-            <div className="admin-stat-icon active-rooms">
-              <Activity size={20} />
-            </div>
-            <div className="admin-stat-content">
-              <span className="admin-stat-label">Active Rooms</span>
-              <span className="admin-stat-value">{stats.activeRooms}</span>
-            </div>
-          </div>
-
-          <div className="admin-stat-card">
-            <div className="admin-stat-icon inactive-rooms">
-              <ShieldAlert size={20} />
-            </div>
-            <div className="admin-stat-content">
-              <span className="admin-stat-label">Inactive Rooms</span>
-              <span className="admin-stat-value">{stats.inactiveRooms}</span>
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* Tab Controls */}
-        <div className="admin-tabs" style={{ marginBottom: 'var(--space-6)' }}>
-          <button 
-            className={`admin-tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
-            onClick={() => setActiveTab('overview')}
-          >
-            Overview
-          </button>
-          <button 
-            className={`admin-tab-btn ${activeTab === 'users' ? 'active' : ''}`}
-            onClick={() => setActiveTab('users')}
-          >
-            User Management ({users.length})
-          </button>
-          <button 
-            className={`admin-tab-btn ${activeTab === 'rooms' ? 'active' : ''}`}
-            onClick={() => setActiveTab('rooms')}
-          >
-            Meeting Rooms ({rooms.length})
-          </button>
+        <div className="flex gap-2 border-b border-gray-200 dark:border-border-primary/60 pb-0.5 mb-6">
+          {['overview', 'users', 'rooms'].map((tab) => (
+            <button 
+              key={tab}
+              className={`px-4 py-2.5 text-sm font-semibold cursor-pointer transition-all duration-150 border-b-2 font-[Outfit] bg-transparent ${
+                activeTab === tab 
+                  ? 'border-brand text-brand' 
+                  : 'border-transparent text-secondary dark:text-offwhite/60 hover:text-primary dark:hover:text-white'
+              }`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab === 'overview' ? 'Overview' : tab === 'users' ? `User Management (${users.length})` : `Meeting Rooms (${rooms.length})`}
+            </button>
+          ))}
         </div>
 
-        {/* Overview Tab Content */}
+        {/* Overview Tab */}
         {activeTab === 'overview' && (
           <div className="flex flex-col gap-6">
-            <div className="admin-panel-card">
-              <h2 style={{ fontSize: 'var(--font-lg)', fontWeight: '600', marginBottom: 'var(--space-4)' }}>Platform Quick Links</h2>
-              <div className="admin-quick-actions">
-                <button onClick={handleCreateRoom} className="btn btn-primary" disabled={isCreatingRoom}>
+            <div className="p-6 rounded-2xl border border-gray-200 dark:border-border-primary/60 bg-white dark:bg-secondary shadow-sm">
+              <h2 className="text-lg font-bold mb-4 font-[Outfit]">Platform Quick Links</h2>
+              <div className="flex gap-3 flex-wrap">
+                <button 
+                  onClick={handleCreateRoom} 
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-bold rounded-xl bg-brand text-secondary hover:bg-brand-hover cursor-pointer transition-all duration-150 shadow-md shadow-brand/10 disabled:opacity-55 font-[Outfit]" 
+                  disabled={isCreatingRoom}
+                >
                   <Plus size={16} />
                   <span>Spin Up Quick Meeting</span>
                 </button>
-                <button onClick={() => navigate('/dashboard')} className="btn btn-secondary">
+                <button 
+                  onClick={() => navigate('/dashboard')} 
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-xl border border-gray-300 dark:border-border-primary bg-transparent hover:border-primary dark:hover:border-white hover:bg-gray-50 dark:hover:bg-surface-hover text-primary dark:text-white transition-all duration-150 font-[Outfit]"
+                >
                   <span>Go to Meeting Lobby</span>
                 </button>
               </div>
 
               {createdRoom && (
-                <div style={{ marginTop: 'var(--space-4)', padding: 'var(--space-4)', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)' }}>
-                  <p style={{ fontWeight: '600', fontSize: 'var(--font-sm)', marginBottom: 'var(--space-2)' }}>Room Created Successfully!</p>
-                  <div className="flex gap-2 items-center" style={{ marginBottom: 'var(--space-2)' }}>
-                    <code>{createdRoom.code}</code>
-                    <button onClick={() => copyToClipboard(createdRoom.code)} className="btn btn-ghost btn-sm btn-icon"><Clipboard size={14} /></button>
+                <div className="mt-4 p-4 rounded-xl bg-offwhite dark:bg-input animate-[fade-in_0.2s_ease-out] border border-gray-200 dark:border-border-primary/40">
+                  <p className="font-bold text-sm mb-2 font-[Outfit]">Room Created Successfully!</p>
+                  <div className="flex gap-3 items-center mb-2 text-xs">
+                    <span className="font-semibold text-secondary/60 dark:text-offwhite/40 uppercase tracking-wider font-[Outfit]">Code</span>
+                    <code className="font-mono text-sm text-brand font-bold">{createdRoom.code}</code>
+                    <button onClick={() => copyToClipboard(createdRoom.code)} className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-surface-hover text-secondary dark:text-offwhite transition-colors"><Clipboard size={14} /></button>
                   </div>
-                  <div className="flex gap-2 items-center">
-                    <code style={{ fontSize: '11px' }}>{createdRoom.link}</code>
-                    <button onClick={() => copyToClipboard(createdRoom.link)} className="btn btn-ghost btn-sm btn-icon"><LinkIcon size={14} /></button>
+                  <div className="flex gap-3 items-center text-xs">
+                    <span className="font-semibold text-secondary/60 dark:text-offwhite/40 uppercase tracking-wider font-[Outfit]">Link</span>
+                    <code className="font-mono text-xs text-secondary dark:text-offwhite truncate max-w-[300px]">{createdRoom.link}</code>
+                    <button onClick={() => copyToClipboard(createdRoom.link)} className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-surface-hover text-secondary dark:text-offwhite transition-colors"><LinkIcon size={14} /></button>
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="admin-overview-columns">
-              <div className="admin-panel-card">
-                <h3 style={{ fontSize: 'var(--font-md)', fontWeight: '600', marginBottom: 'var(--space-3)' }}>Recent Registered Users</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Recent Users */}
+              <div className="p-6 rounded-2xl border border-gray-200 dark:border-border-primary/60 bg-white dark:bg-secondary shadow-sm">
+                <h3 className="text-base font-bold mb-3 font-[Outfit]">Recent Registered Users</h3>
                 {users.length === 0 ? (
-                  <p className="text-muted">No users found.</p>
+                  <p className="text-sm text-secondary dark:text-offwhite/50 font-[Outfit]">No users found.</p>
                 ) : (
-                  <div className="admin-recent-list">
+                  <div className="flex flex-col gap-3">
                     {users.slice(-5).reverse().map(u => (
-                      <div key={u.id} className="admin-recent-item">
+                      <div key={u.id} className="flex justify-between items-center p-3 rounded-xl border border-gray-200 dark:border-border-primary/40 bg-gray-50 dark:bg-input">
                         <div>
-                          <div style={{ fontWeight: '500' }}>{u.name}</div>
-                          <div className="text-muted" style={{ fontSize: 'var(--font-xs)' }}>{u.email}</div>
+                          <div className="font-bold text-sm font-[Outfit]">{u.name}</div>
+                          <div className="text-xs text-secondary dark:text-offwhite/50 font-[Outfit]">{u.email}</div>
                         </div>
-                        <span className={`badge ${u.role === 'ADMIN' ? 'badge-admin' : 'badge-user'}`}>{u.role}</span>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider font-[Outfit] ${
+                          u.role === 'ADMIN' ? 'bg-brand-soft text-brand' : 'bg-gray-200/50 dark:bg-surface-hover text-secondary dark:text-offwhite/60'
+                        }`}>
+                          {u.role}
+                        </span>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
 
-              <div className="admin-panel-card">
-                <h3 style={{ fontSize: 'var(--font-md)', fontWeight: '600', marginBottom: 'var(--space-3)' }}>Recent Meeting Rooms</h3>
+              {/* Recent Rooms */}
+              <div className="p-6 rounded-2xl border border-gray-200 dark:border-border-primary/60 bg-white dark:bg-secondary shadow-sm">
+                <h3 className="text-base font-bold mb-3 font-[Outfit]">Recent Meeting Rooms</h3>
                 {rooms.length === 0 ? (
-                  <p className="text-muted">No meetings created yet.</p>
+                  <p className="text-sm text-secondary dark:text-offwhite/50 font-[Outfit]">No meetings created yet.</p>
                 ) : (
-                  <div className="admin-recent-list">
+                  <div className="flex flex-col gap-3">
                     {rooms.slice(-5).reverse().map(r => (
-                      <div key={r.id || r.roomId} className="admin-recent-item">
+                      <div key={r.id || r.roomId} className="flex justify-between items-center p-3 rounded-xl border border-gray-200 dark:border-border-primary/40 bg-gray-50 dark:bg-input">
                         <div>
-                          <div style={{ fontWeight: '500', fontFamily: 'var(--font-mono)' }}>{r.roomId}</div>
-                          <div className="text-muted" style={{ fontSize: 'var(--font-xs)' }}>By: {r.createdBy}</div>
+                          <div className="font-bold font-mono text-sm text-brand">{r.roomId}</div>
+                          <div className="text-xs text-secondary dark:text-offwhite/50 font-[Outfit]">Host: {r.createdBy}</div>
                         </div>
-                        <span className={`badge ${r.active ? 'badge-active' : 'badge-inactive'}`}>
+                        <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider font-[Outfit] ${
+                          r.active ? 'bg-brand-soft text-brand' : 'bg-coral-soft text-coral'
+                        }`}>
                           {r.active ? 'Active' : 'Inactive'}
                         </span>
                       </div>
@@ -345,15 +313,15 @@ const AdminDashboardPage = () => {
           </div>
         )}
 
-        {/* User Management Tab Content */}
+        {/* User Management Tab */}
         {activeTab === 'users' && (
-          <div className="admin-panel-card">
-            <div className="admin-table-actions flex justify-between items-center" style={{ marginBottom: 'var(--space-4)' }}>
-              <div className="search-bar-container">
-                <Search size={16} className="search-icon" />
+          <div className="p-6 rounded-2xl border border-gray-200 dark:border-border-primary/60 bg-white dark:bg-secondary shadow-sm">
+            <div className="flex justify-between items-center mb-4">
+              <div className="relative w-full max-w-[320px]">
+                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-secondary/40 dark:text-offwhite/30" />
                 <input 
                   type="text" 
-                  className="input search-input" 
+                  className="w-full py-2.5 pl-10 pr-3 text-sm rounded-xl border border-gray-300 dark:border-border-primary/60 bg-offwhite dark:bg-input text-primary dark:text-white focus:border-brand dark:focus:border-brand outline-none transition-all font-[Outfit]"
                   placeholder="Search users by name or email..." 
                   value={userSearch}
                   onChange={(e) => setUserSearch(e.target.value)}
@@ -361,38 +329,37 @@ const AdminDashboardPage = () => {
               </div>
             </div>
 
-            <div className="admin-table-container">
-              <table className="admin-table">
+            <div className="overflow-x-auto rounded-xl border border-gray-150 dark:border-border-primary/40">
+              <table className="w-full border-collapse">
                 <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Actions</th>
+                  <tr className="border-b border-gray-200 dark:border-border-primary/60 bg-gray-50 dark:bg-input">
+                    {['Name', 'Email', 'Role', 'Actions'].map(h => (
+                      <th key={h} className="text-left px-4 py-3 text-xs uppercase tracking-wider font-bold font-[Outfit] text-secondary dark:text-offwhite/50">{h}</th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
                   {filteredUsers.length === 0 ? (
                     <tr>
-                      <td colSpan="4" style={{ textAlign: 'center', padding: 'var(--space-6)', color: 'var(--text-muted)' }}>
+                      <td colSpan="4" className="text-center py-8 font-[Outfit] text-secondary/40 dark:text-offwhite/35">
                         No users found matching "{userSearch}"
                       </td>
                     </tr>
                   ) : (
                     filteredUsers.map(u => (
-                      <tr key={u.id}>
-                        <td>
-                          <div style={{ fontWeight: '600' }}>{u.name}</div>
+                      <tr key={u.id} className="border-b border-gray-150 dark:border-border-primary/40 last:border-b-0 transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-surface-hover">
+                        <td className="px-4 py-3.5 font-bold font-[Outfit] text-sm">{u.name}</td>
+                        <td className="px-4 py-3.5 text-sm font-[Outfit] text-secondary dark:text-offwhite/70">{u.email}</td>
+                        <td className="px-4 py-3.5">
+                          <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider font-[Outfit] ${
+                            u.role === 'ADMIN' ? 'bg-brand-soft text-brand' : 'bg-gray-100 dark:bg-surface text-secondary dark:text-offwhite/60'
+                          }`}>{u.role}</span>
                         </td>
-                        <td>{u.email}</td>
-                        <td>
-                          <span className={`badge ${u.role === 'ADMIN' ? 'badge-admin' : 'badge-user'}`}>{u.role}</span>
-                        </td>
-                        <td>
+                        <td className="px-4 py-3.5">
                           <div className="flex gap-2">
                             <button 
                               onClick={() => handleToggleRole(u.id, u.role)} 
-                              className="btn btn-secondary btn-sm"
+                              className="inline-flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-300 dark:border-border-primary bg-transparent hover:border-primary dark:hover:border-white hover:bg-gray-100 dark:hover:bg-surface cursor-pointer transition-all duration-150 text-primary dark:text-white font-[Outfit] disabled:opacity-55 disabled:cursor-not-allowed"
                               disabled={u.email === user?.email}
                               title="Toggle Role"
                             >
@@ -401,10 +368,9 @@ const AdminDashboardPage = () => {
                             </button>
                             <button 
                               onClick={() => openDeleteUserConfirm(u.id, u.name)} 
-                              className="btn btn-danger btn-sm btn-icon"
+                              className="w-7 h-7 rounded-full flex items-center justify-center bg-coral hover:bg-coral-dark text-white cursor-pointer transition-all duration-150 disabled:opacity-55 disabled:cursor-not-allowed shadow-sm"
                               disabled={u.email === user?.email}
                               title="Delete User"
-                              style={{ width: '28px', height: '28px' }}
                             >
                               <Trash2 size={12} />
                             </button>
@@ -419,15 +385,15 @@ const AdminDashboardPage = () => {
           </div>
         )}
 
-        {/* Meeting Rooms Tab Content */}
+        {/* Meeting Rooms Tab */}
         {activeTab === 'rooms' && (
-          <div className="admin-panel-card">
-            <div className="admin-table-actions flex justify-between items-center" style={{ marginBottom: 'var(--space-4)' }}>
-              <div className="search-bar-container">
-                <Search size={16} className="search-icon" />
+          <div className="p-6 rounded-2xl border border-gray-200 dark:border-border-primary/60 bg-white dark:bg-secondary shadow-sm">
+            <div className="flex justify-between items-center mb-4">
+              <div className="relative w-full max-w-[320px]">
+                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-secondary/40 dark:text-offwhite/30" />
                 <input 
                   type="text" 
-                  className="input search-input" 
+                  className="w-full py-2.5 pl-10 pr-3 text-sm rounded-xl border border-gray-300 dark:border-border-primary/60 bg-offwhite dark:bg-input text-primary dark:text-white focus:border-brand dark:focus:border-brand outline-none transition-all font-[Outfit]"
                   placeholder="Search by Room Code or Host email..." 
                   value={roomSearch}
                   onChange={(e) => setRoomSearch(e.target.value)}
@@ -435,41 +401,41 @@ const AdminDashboardPage = () => {
               </div>
             </div>
 
-            <div className="admin-table-container">
-              <table className="admin-table">
+            <div className="overflow-x-auto rounded-xl border border-gray-150 dark:border-border-primary/40">
+              <table className="w-full border-collapse">
                 <thead>
-                  <tr>
-                    <th>Room Code</th>
-                    <th>Room Name</th>
-                    <th>Created By</th>
-                    <th>Status</th>
-                    <th>Actions</th>
+                  <tr className="border-b border-gray-200 dark:border-border-primary/60 bg-gray-50 dark:bg-input">
+                    {['Room Code', 'Room Name', 'Created By', 'Status', 'Actions'].map(h => (
+                      <th key={h} className="text-left px-4 py-3 text-xs uppercase tracking-wider font-bold font-[Outfit] text-secondary dark:text-offwhite/50">{h}</th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
                   {filteredRooms.length === 0 ? (
                     <tr>
-                      <td colSpan="5" style={{ textAlign: 'center', padding: 'var(--space-6)', color: 'var(--text-muted)' }}>
+                      <td colSpan="5" className="text-center py-8 font-[Outfit] text-secondary/40 dark:text-offwhite/35">
                         No meeting rooms found matching "{roomSearch}"
                       </td>
                     </tr>
                   ) : (
                     filteredRooms.map(r => (
-                      <tr key={r.id || r.roomId}>
-                        <td>
-                          <code style={{ fontSize: 'var(--font-sm)', color: 'var(--accent-text)' }}>{r.roomId}</code>
+                      <tr key={r.id || r.roomId} className="border-b border-gray-150 dark:border-border-primary/40 last:border-b-0 transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-surface-hover">
+                        <td className="px-4 py-3.5">
+                          <code className="font-mono text-sm text-brand font-bold">{r.roomId}</code>
                         </td>
-                        <td>{r.roomName || 'Meeting'}</td>
-                        <td>{r.createdBy}</td>
-                        <td>
-                          <span className={`badge ${r.active ? 'badge-active' : 'badge-inactive'}`}>
+                        <td className="px-4 py-3.5 text-sm font-semibold font-[Outfit]">{r.roomName || 'Meeting'}</td>
+                        <td className="px-4 py-3.5 text-sm font-[Outfit] text-secondary dark:text-offwhite/70">{r.createdBy}</td>
+                        <td className="px-4 py-3.5">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider font-[Outfit] ${
+                            r.active ? 'bg-brand-soft text-brand' : 'bg-coral-soft text-coral'
+                          }`}>
                             {r.active ? 'Active' : 'Inactive'}
                           </span>
                         </td>
-                        <td>
+                        <td className="px-4 py-3.5">
                           <button 
                             onClick={() => openDeleteRoomConfirm(r.roomId)} 
-                            className="btn btn-danger btn-sm"
+                            className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-coral hover:bg-coral-dark text-white cursor-pointer transition-all duration-150 font-[Outfit] shadow-sm shadow-coral/10"
                             title="End and Delete Room"
                           >
                             <Trash2 size={12} />
@@ -488,15 +454,15 @@ const AdminDashboardPage = () => {
 
       {/* Delete User Modal */}
       {deleteUserModal.show && (
-        <div className="admin-modal-overlay">
-          <div className="admin-modal">
-            <h3 style={{ fontSize: 'var(--font-lg)', fontWeight: '700', marginBottom: 'var(--space-2)' }}>Delete User Account</h3>
-            <p className="text-muted" style={{ fontSize: 'var(--font-sm)', marginBottom: 'var(--space-6)' }}>
-              Are you sure you want to delete user <strong>{deleteUserModal.userName}</strong>? This action cannot be undone.
+        <div className="fixed inset-0 z-[500] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-[420px] p-6 bg-white dark:bg-secondary border border-gray-200 dark:border-border-primary/60 rounded-3xl shadow-2xl animate-[fade-in_0.2s_ease-out]">
+            <h3 className="text-lg font-bold mb-2 font-[Outfit]">Delete User Account</h3>
+            <p className="text-sm text-secondary dark:text-offwhite/60 mb-6 font-[Outfit] font-light leading-relaxed">
+              Are you sure you want to delete user <strong>{deleteUserModal.userName}</strong>? This will permanently erase their credentials and portal history. This action cannot be undone.
             </p>
-            <div className="flex justify-end gap-2">
-              <button onClick={closeDeleteUserConfirm} className="btn btn-secondary">Cancel</button>
-              <button onClick={handleDeleteUser} className="btn btn-danger">Confirm Delete</button>
+            <div className="flex justify-end gap-2 text-sm font-semibold font-[Outfit]">
+              <button onClick={closeDeleteUserConfirm} className="px-4 py-2 rounded-xl border border-gray-300 dark:border-border-primary text-primary dark:text-white bg-transparent hover:bg-gray-50 dark:hover:bg-surface-hover transition-colors cursor-pointer">Cancel</button>
+              <button onClick={handleDeleteUser} className="px-4 py-2 rounded-xl bg-coral hover:bg-coral-dark text-white shadow-md shadow-coral/10 cursor-pointer">Confirm Delete</button>
             </div>
           </div>
         </div>
@@ -504,15 +470,15 @@ const AdminDashboardPage = () => {
 
       {/* Delete Room Modal */}
       {deleteRoomModal.show && (
-        <div className="admin-modal-overlay">
-          <div className="admin-modal">
-            <h3 style={{ fontSize: 'var(--font-lg)', fontWeight: '700', marginBottom: 'var(--space-2)' }}>Terminate Meeting Room</h3>
-            <p className="text-muted" style={{ fontSize: 'var(--font-sm)', marginBottom: 'var(--space-6)' }}>
+        <div className="fixed inset-0 z-[500] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-[420px] p-6 bg-white dark:bg-secondary border border-gray-200 dark:border-border-primary/60 rounded-3xl shadow-2xl animate-[fade-in_0.2s_ease-out]">
+            <h3 className="text-lg font-bold mb-2 font-[Outfit]">Terminate Meeting Room</h3>
+            <p className="text-sm text-secondary dark:text-offwhite/60 mb-6 font-[Outfit] font-light leading-relaxed">
               Are you sure you want to end and delete room <strong>{deleteRoomModal.roomId}</strong>? All participants will lose connection to the room.
             </p>
-            <div className="flex justify-end gap-2">
-              <button onClick={closeDeleteRoomConfirm} className="btn btn-secondary">Cancel</button>
-              <button onClick={handleDeleteRoom} className="btn btn-danger">Confirm Terminate</button>
+            <div className="flex justify-end gap-2 text-sm font-semibold font-[Outfit]">
+              <button onClick={closeDeleteRoomConfirm} className="px-4 py-2 rounded-xl border border-gray-300 dark:border-border-primary text-primary dark:text-white bg-transparent hover:bg-gray-50 dark:hover:bg-surface-hover transition-colors cursor-pointer">Cancel</button>
+              <button onClick={handleDeleteRoom} className="px-4 py-2 rounded-xl bg-coral hover:bg-coral-dark text-white shadow-md shadow-coral/10 cursor-pointer">Confirm Terminate</button>
             </div>
           </div>
         </div>

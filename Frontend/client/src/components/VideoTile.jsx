@@ -31,42 +31,47 @@ const VideoTile = ({ track, isLocal, user, name, videoActive, audioActive }) => 
   };
 
   return (
-    <div className="video-tile">
+    <div className="relative bg-secondary rounded-2xl overflow-hidden border border-border-primary/60 shadow-lg group min-h-[180px] transition-all duration-300 hover:shadow-xl hover:border-brand/40">
       {/* Video container */}
       <div 
         ref={videoRef} 
+        className="w-full h-full bg-black"
         style={{ 
-          width: '100%', 
-          height: '100%', 
           display: videoActive ? 'block' : 'none',
-          backgroundColor: '#000'
         }} 
       />
 
       {/* Avatar Fallback */}
       {!videoActive && (
-        <div className="video-tile-avatar">
-          <div className="video-tile-avatar-circle">
+        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-secondary to-tertiary">
+          <div className="w-20 h-20 rounded-full bg-surface flex items-center justify-center border border-border-primary/50 shadow-inner transition-transform duration-300 group-hover:scale-105">
             {name ? (
-              <span style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+              <span className="text-2xl font-bold text-white tracking-wide font-[Outfit]">
                 {getInitials(name)}
               </span>
             ) : (
-              <User size={36} />
+              <User size={36} className="text-offwhite/50" />
             )}
           </div>
         </div>
       )}
 
-      {/* Control overlay / Labels */}
-      <div className="video-tile-label flex items-center gap-2">
-        <span>{name || (isLocal ? 'You' : 'Remote Participant')}</span>
+      {/* Name label — bottom-left, frosted glass */}
+      <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1.5 px-3 py-1 bg-black/60 backdrop-blur-md rounded-lg z-10">
+        <span className="text-xs font-medium text-white font-[Outfit] tracking-wide truncate max-w-[140px]">
+          {name || (isLocal ? 'You' : 'Participant')}
+        </span>
         {!audioActive && (
-          <span style={{ color: '#ef4444', display: 'inline-flex', alignItems: 'center' }}>
-            <MicOff size={14} />
+          <span className="text-coral inline-flex items-center">
+            <MicOff size={12} />
           </span>
         )}
       </div>
+
+      {/* Active speaking indicator — brand ring */}
+      {audioActive && (
+        <div className="absolute top-2.5 right-2.5 w-3 h-3 rounded-full bg-brand shadow-lg shadow-brand/40 z-10 animate-pulse" />
+      )}
     </div>
   );
 };

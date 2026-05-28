@@ -1,30 +1,29 @@
-import React from 'react';
-import { Route, Routes } from 'react-router-dom';
+import React, { lazy, Suspense } from 'react';
+import { Route, Routes, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
-// Pages
-import LandingPage from './pages/LandingPage';
-import LoginPage from './pages/LoginPage';
-import SignupPage from './pages/SignupPage';
-import DashboardPage from './pages/DashboardPage';
-import LobbyPage from './pages/LobbyPage';
-import MeetingRoomPage from './pages/MeetingRoomPage';
-import AdminDashboardPage from './pages/AdminDashboardPage';
-import { Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
+
+// Lazy-loaded pages for code splitting & faster initial page load
+const LandingPage = lazy(() => import('./pages/LandingPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const SignupPage = lazy(() => import('./pages/SignupPage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const LobbyPage = lazy(() => import('./pages/LobbyPage'));
+const MeetingRoomPage = lazy(() => import('./pages/MeetingRoomPage'));
+const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
 
 const AdminRoute = ({ children }) => {
   const { user, isAuthenticated, loading } = useAuth();
 
   if (loading) {
     return (
-      <div className="loading-screen">
-        <div className="loading-spinner-lg"></div>
-        <p>Checking authorization...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-offwhite dark:bg-primary text-secondary dark:text-offwhite/70 transition-colors duration-300">
+        <div className="w-10 h-10 border-3 border-gray-200 dark:border-border-primary border-t-brand rounded-full animate-spin" />
+        <p className="font-[Outfit]">Checking authorization...</p>
       </div>
     );
   }
@@ -35,6 +34,13 @@ const AdminRoute = ({ children }) => {
 
   return children;
 };
+
+const PageLoader = () => (
+  <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-offwhite dark:bg-primary text-secondary dark:text-offwhite/70 transition-colors duration-300">
+    <div className="w-10 h-10 border-3 border-gray-200 dark:border-border-primary border-t-brand rounded-full animate-spin" />
+    <p className="font-[Outfit]">Loading page...</p>
+  </div>
+);
 
 const App = () => {
   return (
@@ -49,57 +55,59 @@ const App = () => {
         pauseOnFocusLoss
         draggable
         pauseOnHover
-        theme="dark"
+        theme="colored"
       />
       
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
 
-        {/* Protected Routes */}
-        <Route 
-          path="/dashboard" 
-          element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/join/:roomId" 
-          element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/lobby/:roomId" 
-          element={
-            <ProtectedRoute>
-              <LobbyPage />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/room/:roomId" 
-          element={
-            <ProtectedRoute>
-              <MeetingRoomPage />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/admin" 
-          element={
-            <AdminRoute>
-              <AdminDashboardPage />
-            </AdminRoute>
-          } 
-        />
-      </Routes>
+          {/* Protected Routes */}
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/join/:roomId" 
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/lobby/:roomId" 
+            element={
+              <ProtectedRoute>
+                <LobbyPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/room/:roomId" 
+            element={
+              <ProtectedRoute>
+                <MeetingRoomPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin" 
+            element={
+              <AdminRoute>
+                <AdminDashboardPage />
+              </AdminRoute>
+            } 
+          />
+        </Routes>
+      </Suspense>
     </div>
   );
 };

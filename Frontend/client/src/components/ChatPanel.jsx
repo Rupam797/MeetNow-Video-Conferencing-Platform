@@ -63,33 +63,56 @@ const ChatPanel = ({ onClose }) => {
   };
 
   return (
-    <div className="side-panel">
-      <div className="side-panel-header">
-        <h3>Meeting Chat</h3>
-        <button onClick={onClose} className="side-panel-close">
-          <X size={16} />
+    <div className="w-80 bg-tertiary/95 backdrop-blur-xl border-l border-border-primary/60 flex flex-col shrink-0 animate-[fade-in_0.25s_ease-out]">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border-primary/60">
+        <h3 className="text-sm font-semibold text-white font-[Outfit] tracking-wide">
+          Meeting Chat
+        </h3>
+        <button 
+          onClick={onClose} 
+          className="w-7 h-7 rounded-full flex items-center justify-center text-offwhite/60 hover:text-white hover:bg-surface-hover transition-all duration-150 cursor-pointer"
+        >
+          <X size={14} />
         </button>
       </div>
 
-      <div className="side-panel-body">
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-3 space-y-3 scrollbar-thin">
         {messages.map((msg) => (
-          <div key={msg.id} className={`chat-message ${msg.isOwn ? 'own' : ''}`}>
-            <div className="chat-message-sender">{msg.sender}</div>
-            <div className="chat-message-bubble">{msg.content}</div>
-            <div className="chat-message-time">{msg.time}</div>
+          <div key={msg.id} className={`${msg.isOwn ? 'text-right' : 'text-left'}`}>
+            <div className="text-[10px] text-offwhite/50 mb-0.5 font-medium font-[Outfit]">
+              {msg.sender}
+            </div>
+            <div className={`inline-block px-3 py-1.5 rounded-xl text-sm leading-relaxed max-w-[85%] break-words font-[Outfit]
+              ${msg.isOwn 
+                ? 'bg-brand text-secondary rounded-br-sm' 
+                : 'bg-surface text-offwhite rounded-bl-sm'
+              }`}
+            >
+              {msg.content}
+            </div>
+            <div className="text-[10px] text-offwhite/40 mt-0.5">
+              {msg.time}
+            </div>
           </div>
         ))}
         <div ref={messagesEndRef} />
       </div>
 
-      <form onSubmit={handleSend} className="chat-input-area">
+      {/* Input */}
+      <form onSubmit={handleSend} className="px-3 py-2.5 border-t border-border-primary/60 flex gap-2">
         <input
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           placeholder="Send a message..."
+          className="flex-1 px-3 py-2 bg-input border border-border-primary/60 rounded-full text-sm text-white font-[Outfit] placeholder:text-offwhite/40 outline-none focus:border-brand/50 transition-colors duration-150"
         />
-        <button type="submit" className="chat-send-btn">
+        <button 
+          type="submit" 
+          className="w-9 h-9 rounded-full bg-brand text-secondary flex items-center justify-center hover:bg-brand-hover transition-all duration-150 active:scale-95 cursor-pointer shadow-md shadow-brand/20"
+        >
           <Send size={14} />
         </button>
       </form>

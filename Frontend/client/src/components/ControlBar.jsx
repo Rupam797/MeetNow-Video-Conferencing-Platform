@@ -5,9 +5,10 @@ import {
   Video, 
   VideoOff, 
   Monitor, 
+  MonitorOff,
   MessageSquare, 
   Users, 
-  PhoneOff 
+  PhoneOff
 } from 'lucide-react';
 
 const ControlBar = ({
@@ -24,79 +25,92 @@ const ControlBar = ({
   onLeave
 }) => {
   return (
-    <div className="meeting-controls">
-      {/* Mic toggle */}
-      <div className="control-btn">
-        <button 
-          onClick={onToggleMic}
-          className={micActive ? 'active' : 'inactive'}
-          title={micActive ? 'Mute Mic' : 'Unmute Mic'}
-        >
-          {micActive ? <Mic size={20} /> : <MicOff size={20} />}
-        </button>
-        <span className="control-btn-label">Mic</span>
-      </div>
-
-      {/* Camera toggle */}
-      <div className="control-btn">
-        <button 
-          onClick={onToggleCamera}
-          className={cameraActive ? 'active' : 'inactive'}
-          title={cameraActive ? 'Turn Camera Off' : 'Turn Camera On'}
-        >
-          {cameraActive ? <Video size={20} /> : <VideoOff size={20} />}
-        </button>
-        <span className="control-btn-label">Camera</span>
-      </div>
-
-      {/* Screen share toggle */}
-      <div className="control-btn">
-        <button 
-          onClick={onToggleScreenShare}
-          className={screenShareActive ? 'inactive' : 'active'} 
-          style={screenShareActive ? { backgroundColor: 'var(--success)', color: '#fff' } : {}}
-          title={screenShareActive ? 'Stop Sharing' : 'Share Screen'}
-        >
-          <Monitor size={20} />
-        </button>
-        <span className="control-btn-label">Share</span>
-      </div>
-
-      {/* Chat toggle */}
-      <div className="control-btn">
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-[slide-up_0.4s_ease-out]">
+      <div className="flex items-center gap-2 px-4 py-2.5 bg-tertiary/95 backdrop-blur-xl rounded-full shadow-2xl border border-border-primary/60">
+        
+        {/* Chat toggle */}
         <button 
           onClick={onToggleChat}
-          className={chatOpen ? 'active' : 'inactive'}
-          style={chatOpen ? { borderColor: 'var(--accent)' } : {}}
+          className={`group relative w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 ease-out cursor-pointer
+            ${chatOpen 
+              ? 'bg-brand text-secondary shadow-lg shadow-brand/25 scale-105' 
+              : 'bg-surface hover:bg-surface-hover text-offwhite'
+            }`}
           title={chatOpen ? 'Close Chat' : 'Open Chat'}
         >
-          <MessageSquare size={20} />
+          <MessageSquare size={18} />
+          {chatOpen && (
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-brand rounded-full animate-ping" />
+          )}
         </button>
-        <span className="control-btn-label">Chat</span>
-      </div>
 
-      {/* Participants toggle */}
-      <div className="control-btn">
+        {/* Mic toggle */}
+        <button 
+          onClick={onToggleMic}
+          className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 ease-out cursor-pointer
+            ${micActive 
+              ? 'bg-surface hover:bg-surface-hover text-offwhite' 
+              : 'bg-coral/20 text-coral hover:bg-coral/30'
+            }`}
+          title={micActive ? 'Mute Mic' : 'Unmute Mic'}
+        >
+          {micActive ? <Mic size={18} /> : <MicOff size={18} />}
+        </button>
+
+        {/* Camera toggle */}
+        <button 
+          onClick={onToggleCamera}
+          className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 ease-out cursor-pointer
+            ${cameraActive 
+              ? 'bg-surface hover:bg-surface-hover text-offwhite' 
+              : 'bg-coral/20 text-coral hover:bg-coral/30'
+            }`}
+          title={cameraActive ? 'Turn Camera Off' : 'Turn Camera On'}
+        >
+          {cameraActive ? <Video size={18} /> : <VideoOff size={18} />}
+        </button>
+
+        {/* Divider */}
+        <div className="w-px h-7 bg-border-primary/50 mx-1" />
+
+        {/* Leave / End Call button — pill shape, coral red */}
+        <button 
+          onClick={onLeave}
+          className="w-12 h-12 rounded-full bg-coral hover:bg-coral-dark text-white flex items-center justify-center transition-all duration-200 ease-out hover:scale-105 active:scale-95 shadow-lg shadow-coral/30 cursor-pointer"
+          title="Leave Meeting"
+        >
+          <PhoneOff size={20} />
+        </button>
+
+        {/* Divider */}
+        <div className="w-px h-7 bg-border-primary/50 mx-1" />
+
+        {/* Screen share toggle */}
+        <button 
+          onClick={onToggleScreenShare}
+          className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 ease-out cursor-pointer
+            ${screenShareActive 
+              ? 'bg-brand text-secondary shadow-lg shadow-brand/25 scale-105' 
+              : 'bg-surface hover:bg-surface-hover text-offwhite'
+            }`}
+          title={screenShareActive ? 'Stop Sharing' : 'Share Screen'}
+        >
+          {screenShareActive ? <MonitorOff size={18} /> : <Monitor size={18} />}
+        </button>
+
+        {/* Participants People */}
         <button 
           onClick={onToggleParticipants}
-          className={participantsOpen ? 'active' : 'inactive'}
-          style={participantsOpen ? { borderColor: 'var(--accent)' } : {}}
+          className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 ease-out cursor-pointer
+            ${participantsOpen 
+              ? 'bg-brand text-secondary shadow-lg shadow-brand/25 scale-105' 
+              : 'bg-surface hover:bg-surface-hover text-offwhite'
+            }`}
           title={participantsOpen ? 'Close Participants' : 'Open Participants'}
         >
-          <Users size={20} />
+          <Users size={18} />
         </button>
-        <span className="control-btn-label">People</span>
       </div>
-
-      {/* Leave button */}
-      <button 
-        onClick={onLeave}
-        className="leave-btn"
-        title="Leave Meeting"
-      >
-        <PhoneOff size={18} />
-        <span>Leave</span>
-      </button>
     </div>
   );
 };

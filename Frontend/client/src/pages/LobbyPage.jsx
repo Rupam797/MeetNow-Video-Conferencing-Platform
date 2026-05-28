@@ -18,7 +18,6 @@ const LobbyPage = () => {
   
   const videoRef = useRef(null);
 
-  // 1. Validate that the meeting room exists
   useEffect(() => {
     const validateRoom = async () => {
       try {
@@ -30,29 +29,23 @@ const LobbyPage = () => {
         navigate('/dashboard');
       }
     };
-
     validateRoom();
   }, [roomId, navigate]);
 
-  // 2. Control webcam preview stream
   useEffect(() => {
     if (isValidating) return;
-
     let activeStream = null;
 
     const enableStream = async () => {
       try {
-        // Only request what is active
         const constraints = {
           video: cameraActive ? { width: 640, height: 480, facingMode: 'user' } : false,
           audio: micActive
         };
-
         if (constraints.video || constraints.audio) {
           const stream = await navigator.mediaDevices.getUserMedia(constraints);
           activeStream = stream;
           setPreviewStream(stream);
-
           if (videoRef.current && cameraActive) {
             videoRef.current.srcObject = stream;
           }
@@ -66,7 +59,6 @@ const LobbyPage = () => {
         setMicActive(false);
       }
     };
-
     enableStream();
 
     return () => {
@@ -85,12 +77,8 @@ const LobbyPage = () => {
   };
 
   const handleJoin = () => {
-    // Navigate to the meeting room page and pass device states in history state
     navigate(`/room/${roomId}`, { 
-      state: { 
-        initialMic: micActive, 
-        initialCamera: cameraActive 
-      } 
+      state: { initialMic: micActive, initialCamera: cameraActive } 
     });
   };
 
@@ -102,59 +90,66 @@ const LobbyPage = () => {
 
   if (isValidating) {
     return (
-      <div className="loading-screen">
-        <div className="loading-spinner-lg"></div>
-        <p>Validating room details...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-offwhite dark:bg-primary text-secondary dark:text-offwhite/70 transition-colors duration-300">
+        <div className="w-10 h-10 border-3 border-gray-200 border-t-brand dark:border-border-primary dark:border-t-brand rounded-full animate-spin" />
+        <p className="font-[Outfit]">Validating room details...</p>
       </div>
     );
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-offwhite dark:bg-primary text-primary dark:text-white transition-colors duration-300">
       <Navbar />
 
-      <div className="lobby-page page-wrapper">
-        <div className="container">
-          <div className="lobby-container">
+      <div className="min-h-screen flex items-center justify-center p-6 pt-20">
+        <div className="max-w-[1120px] mx-auto px-6 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-[1.2fr_1fr] gap-8 max-w-[920px] w-full mx-auto">
             {/* Left Column — Preview */}
-            <div className="lobby-preview">
+            <div className="relative aspect-[16/10] rounded-3xl overflow-hidden border border-gray-200 dark:border-border-primary/60 bg-gray-100 dark:bg-tertiary shadow-lg group">
               {cameraActive && previewStream?.getVideoTracks().length > 0 ? (
                 <video 
                   ref={videoRef} 
                   autoPlay 
                   playsInline 
                   muted 
+                  className="w-full h-full object-cover -scale-x-100"
                 />
               ) : (
-                <div className="lobby-preview-off">
-                  <div className="lobby-preview-avatar">
+                <div className="flex flex-col items-center justify-center h-full gap-3 text-secondary/40 dark:text-offwhite/30">
+                  <div className="w-[80px] h-[80px] rounded-full bg-white dark:bg-surface flex items-center justify-center border border-gray-200 dark:border-border-primary/50 shadow-inner">
                     {user?.name ? (
-                      <span style={{ fontSize: '32px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+                      <span className="text-[32px] font-bold font-[Outfit] text-primary dark:text-white">
                         {getInitials(user.name)}
                       </span>
                     ) : (
-                      <User size={48} />
+                      <User size={40} />
                     )}
                   </div>
-                  <span>Camera is turned off</span>
+                  <span className="font-[Outfit] text-sm text-secondary dark:text-offwhite/50">Camera is turned off</span>
                 </div>
               )}
 
               {/* Toggle Buttons Overlaid */}
-              <div className="lobby-controls-bar">
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-3 px-4 py-2.5 rounded-full bg-black/60 backdrop-blur-md z-10">
                 <button 
                   onClick={toggleMic} 
-                  className={`btn btn-icon ${micActive ? 'btn-secondary' : 'btn-danger'}`}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-all duration-150 border ${
+                    micActive 
+                      ? 'border-white/20 text-white bg-transparent hover:bg-white/10' 
+                      : 'border-transparent bg-coral text-white shadow-md shadow-coral/20'
+                  }`}
                   title={micActive ? 'Mute Mic' : 'Unmute Mic'}
-                  style={{ width: '40px', height: '40px', borderRadius: '50%' }}
                 >
                   {micActive ? <Mic size={16} /> : <MicOff size={16} />}
                 </button>
                 <button 
                   onClick={toggleCamera} 
-                  className={`btn btn-icon ${cameraActive ? 'btn-secondary' : 'btn-danger'}`}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-all duration-150 border ${
+                    cameraActive 
+                      ? 'border-white/20 text-white bg-transparent hover:bg-white/10' 
+                      : 'border-transparent bg-coral text-white shadow-md shadow-coral/20'
+                  }`}
                   title={cameraActive ? 'Turn Camera Off' : 'Turn Camera On'}
-                  style={{ width: '40px', height: '40px', borderRadius: '50%' }}
                 >
                   {cameraActive ? <Video size={16} /> : <VideoOff size={16} />}
                 </button>
@@ -162,20 +157,20 @@ const LobbyPage = () => {
             </div>
 
             {/* Right Column — Info & Join */}
-            <div className="lobby-info">
+            <div className="flex flex-col justify-center gap-6">
               <div>
-                <h2 className="lobby-title">Ready to join?</h2>
-                <p className="text-muted" style={{ marginTop: 'var(--space-2)' }}>
-                  Set up your camera and microphone audio before entering the meeting.
+                <h2 className="text-2xl md:text-3xl font-extrabold font-[Outfit] text-primary dark:text-white">Ready to join?</h2>
+                <p className="mt-2 text-sm text-secondary dark:text-offwhite/60 font-light font-[Outfit] leading-relaxed">
+                  Configure your microphone and camera settings, check your network signals, and connect securely.
                 </p>
               </div>
 
-              <div className="room-id-display">
-                <span style={{ marginRight: '8px' }}>Room Code:</span>
-                <code>{roomId}</code>
+              <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-gray-255 dark:border-border-primary/65 text-sm bg-white dark:bg-input text-secondary dark:text-offwhite">
+                <span className="font-bold text-xs uppercase tracking-wider font-[Outfit] text-secondary/50 dark:text-offwhite/40">Room Code</span>
+                <code className="flex-1 font-mono text-sm text-brand font-bold text-center">{roomId}</code>
                 <button 
                   onClick={copyRoomLink} 
-                  className="btn btn-ghost btn-sm btn-icon"
+                  className="p-1.5 rounded-full cursor-pointer transition-colors hover:bg-gray-100 dark:hover:bg-surface-hover text-secondary dark:text-offwhite" 
                   title="Copy share link"
                 >
                   <Clipboard size={14} />
@@ -185,14 +180,14 @@ const LobbyPage = () => {
               <div className="flex flex-col gap-3">
                 <button 
                   onClick={handleJoin} 
-                  className="btn btn-primary btn-lg w-full"
+                  className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-bold rounded-xl bg-primary text-brand hover:bg-primary/95 dark:bg-brand dark:text-secondary dark:hover:bg-brand-hover cursor-pointer transition-all duration-150 active:scale-[0.98] font-[Outfit] shadow-md shadow-brand/10"
                 >
-                  <span>Join Meeting</span>
-                  <ArrowRight size={18} />
+                  <span>Enter Room Now</span>
+                  <ArrowRight size={16} />
                 </button>
                 <button 
                   onClick={() => navigate('/dashboard')} 
-                  className="btn btn-secondary w-full"
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl border border-gray-300 dark:border-border-primary hover:border-primary dark:hover:border-white hover:bg-gray-50 dark:hover:bg-surface-hover cursor-pointer transition-all duration-150 text-primary dark:text-white bg-transparent font-[Outfit]"
                 >
                   <span>Back to Dashboard</span>
                 </button>

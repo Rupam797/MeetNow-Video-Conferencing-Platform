@@ -15,22 +15,33 @@ const ParticipantPanel = ({ remoteUsers = [], participantNames = {}, onClose }) 
   };
 
   return (
-    <div className="side-panel">
-      <div className="side-panel-header">
-        <h3>Participants ({remoteUsers.length + 1})</h3>
-        <button onClick={onClose} className="side-panel-close">
-          <X size={16} />
+    <div className="w-80 bg-tertiary/95 backdrop-blur-xl border-l border-border-primary/60 flex flex-col shrink-0 animate-[fade-in_0.25s_ease-out]">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border-primary/60">
+        <h3 className="text-sm font-semibold text-white font-[Outfit] tracking-wide">
+          Participants ({remoteUsers.length + 1})
+        </h3>
+        <button 
+          onClick={onClose} 
+          className="w-7 h-7 rounded-full flex items-center justify-center text-offwhite/60 hover:text-white hover:bg-surface-hover transition-all duration-150 cursor-pointer"
+        >
+          <X size={14} />
         </button>
       </div>
 
-      <div className="side-panel-body" style={{ padding: 'var(--space-2)' }}>
+      {/* Participant List */}
+      <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
         {/* Local user */}
-        <div className="participant-item">
-          <div className="participant-avatar">
+        <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface-hover/60 transition-colors duration-150 group">
+          <div className="w-9 h-9 rounded-full bg-brand flex items-center justify-center text-secondary text-xs font-bold font-[Outfit] shrink-0 shadow-md shadow-brand/20">
             {getInitials(user?.name)}
           </div>
-          <span className="participant-name">{user?.name || 'You'}</span>
-          <span className="participant-tag">Host</span>
+          <span className="text-sm font-medium text-white font-[Outfit] truncate flex-1">
+            {user?.name || 'You'}
+          </span>
+          <span className="text-[10px] font-semibold text-brand bg-brand/15 px-2 py-0.5 rounded-full font-[Outfit] uppercase tracking-wider">
+            Host
+          </span>
         </div>
 
         {/* Remote users */}
@@ -38,12 +49,16 @@ const ParticipantPanel = ({ remoteUsers = [], participantNames = {}, onClose }) 
           const uid = remoteUser.uid;
           const remoteName = getRemoteUserName(uid);
           return (
-            <div key={uid} className="participant-item">
-              <div className="participant-avatar">
+            <div key={uid} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface-hover/60 transition-colors duration-150 group">
+              <div className="w-9 h-9 rounded-full bg-surface flex items-center justify-center text-offwhite text-xs font-bold font-[Outfit] shrink-0 border border-border-primary/60">
                 {getInitials(remoteName)}
               </div>
-              <span className="participant-name">{remoteName}</span>
-              <span className="participant-tag" style={{ color: 'var(--text-muted)' }}>Joined</span>
+              <span className="text-sm font-medium text-white font-[Outfit] truncate flex-1">
+                {remoteName}
+              </span>
+              <span className="text-[10px] font-medium text-offwhite/50 bg-surface px-2 py-0.5 rounded-full font-[Outfit]">
+                Joined
+              </span>
             </div>
           );
         })}
