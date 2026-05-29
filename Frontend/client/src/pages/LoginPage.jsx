@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Video, Mail, Lock, Sparkles, ArrowRight, Star } from 'lucide-react';
+import { Video, Mail, Lock, Sparkles, ArrowRight, Star, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 const LoginPage = () => {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -129,15 +130,23 @@ const LoginPage = () => {
               <label htmlFor="password" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-offwhite/65 font-[Outfit]">Password</label>
               <div className="relative">
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   id="password"
-                  className="w-full py-3 pl-10 pr-3 text-sm rounded-xl border border-gray-300 dark:border-border-primary bg-transparent focus:border-brand dark:focus:border-brand focus:shadow-[0_0_0_3px_rgba(219,234,141,0.2)] dark:bg-input text-primary dark:text-white outline-none transition-all duration-150 font-[Outfit]"
+                  className="w-full py-3 pl-10 pr-10 text-sm rounded-xl border border-gray-300 dark:border-border-primary bg-transparent focus:border-brand dark:focus:border-brand focus:shadow-[0_0_0_3px_rgba(219,234,141,0.2)] dark:bg-input text-primary dark:text-white outline-none transition-all duration-150 font-[Outfit]"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
                 <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-secondary/40 dark:text-offwhite/30" />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-secondary/40 dark:text-offwhite/30 hover:text-primary dark:hover:text-brand transition-colors cursor-pointer p-1"
+                  title={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
             </div>
 
