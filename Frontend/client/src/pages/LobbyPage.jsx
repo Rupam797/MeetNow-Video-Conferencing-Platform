@@ -15,6 +15,10 @@ const LobbyPage = () => {
   const [cameraActive, setCameraActive] = useState(true);
   const [isValidating, setIsValidating] = useState(true);
   const [previewStream, setPreviewStream] = useState(null);
+  const [cameras, setCameras] = useState([]);
+  const [microphones, setMicrophones] = useState([]);
+  const [selectedCameraId, setSelectedCameraId] = useState('');
+  const [selectedMicId, setSelectedMicId] = useState('');
   
   const videoRef = useRef(null);
 
@@ -32,6 +36,26 @@ const LobbyPage = () => {
     validateRoom();
   }, [roomId, navigate]);
 
+  const getDevices = async () => {
+    try {
+      const deviceList = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = deviceList.filter(device => device.kind === 'videoinput');
+      const audioDevices = deviceList.filter(device => device.kind === 'audioinput');
+      
+      setCameras(videoDevices);
+      setMicrophones(audioDevices);
+
+      if (videoDevices.length > 0) {
+        setSelectedCameraId(prev => prev || videoDevices[0].deviceId);
+      }
+      if (audioDevices.length > 0) {
+        setSelectedMicId(prev => prev || audioDevices[0].deviceId);
+      }
+    } catch (err) {
+      console.error('Error listing devices:', err);
+    }
+  };
+
   useEffect(() => {
     if (isValidating) return;
     let activeStream = null;
@@ -39,16 +63,19 @@ const LobbyPage = () => {
     const enableStream = async () => {
       try {
         const constraints = {
-          video: cameraActive ? { width: 640, height: 480, facingMode: 'user' } : false,
-          audio: micActive
+          video: cameraActive ? { 
+            deviceId: selectedCameraId ? { exact: selectedCameraId } : undefined,
+            width: 640, 
+            height: 480, 
+            facingMode: 'user' 
+          } : false,
+          audio: micActive ? (selectedMicId ? { deviceId: { exact: selectedMicId } } : true) : false
         };
         if (constraints.video || constraints.audio) {
           const stream = await navigator.mediaDevices.getUserMedia(constraints);
           activeStream = stream;
           setPreviewStream(stream);
-          if (videoRef.current && cameraActive) {
-            videoRef.current.srcObject = stream;
-          }
+          await getDevices();
         } else {
           setPreviewStream(null);
         }
@@ -66,7 +93,14 @@ const LobbyPage = () => {
         activeStream.getTracks().forEach(track => track.stop());
       }
     };
-  }, [cameraActive, micActive, isValidating]);
+  }, [cameraActive, micActive, selectedCameraId, selectedMicId, isValidating]);
+
+  // Handle attaching stream to video element when it mounts
+  useEffect(() => {
+    if (videoRef.current && previewStream && cameraActive) {
+      videoRef.current.srcObject = previewStream;
+    }
+  }, [previewStream, cameraActive]);
 
   const toggleMic = () => setMicActive(prev => !prev);
   const toggleCamera = () => setCameraActive(prev => !prev);
@@ -78,7 +112,12 @@ const LobbyPage = () => {
 
   const handleJoin = () => {
     navigate(`/room/${roomId}`, { 
-      state: { initialMic: micActive, initialCamera: cameraActive } 
+      state: { 
+        initialMic: micActive, 
+        initialCamera: cameraActive,
+        selectedCameraId: cameraActive ? selectedCameraId : null,
+        selectedMicId: micActive ? selectedMicId : null
+      } 
     });
   };
 
@@ -165,7 +204,55 @@ const LobbyPage = () => {
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-gray-255 dark:border-border-primary/65 text-sm bg-white dark:bg-input text-secondary dark:text-offwhite">
+              {/* Device Settings Dropdowns */}
+              <div className="flex flex-col gap-3">
+                <span className="font-bold text-xs uppercase tracking-wider font-[Outfit] text-secondary/50 dark:text-offwhite/40">Device Settings</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Camera Select */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs text-secondary/60 dark:text-offwhite/50 font-semibold font-[Outfit]">Camera Device</label>
+                    <select
+                      value={selectedCameraId}
+                      onChange={(e) => setSelectedCameraId(e.target.value)}
+                      disabled={!cameraActive}
+                      className="w-full px-3 py-2 bg-white dark:bg-input border border-gray-200 dark:border-border-primary/65 rounded-xl text-xs text-primary dark:text-white font-[Outfit] outline-none focus:border-brand transition-colors disabled:opacity-50 cursor-pointer shadow-sm"
+                    >
+                      {cameras.length > 0 ? (
+                        cameras.map((camera) => (
+                          <option key={camera.deviceId} value={camera.deviceId} className="dark:bg-secondary">
+                            {camera.label || `Camera ${camera.deviceId.substring(0, 5)}`}
+                          </option>
+                        ))
+                      ) : (
+                        <option value="" className="dark:bg-secondary">No camera detected</option>
+                      )}
+                    </select>
+                  </div>
+
+                  {/* Mic Select */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs text-secondary/60 dark:text-offwhite/50 font-semibold font-[Outfit]">Audio Input Device</label>
+                    <select
+                      value={selectedMicId}
+                      onChange={(e) => setSelectedMicId(e.target.value)}
+                      disabled={!micActive}
+                      className="w-full px-3 py-2 bg-white dark:bg-input border border-gray-200 dark:border-border-primary/65 rounded-xl text-xs text-primary dark:text-white font-[Outfit] outline-none focus:border-brand transition-colors disabled:opacity-50 cursor-pointer shadow-sm"
+                    >
+                      {microphones.length > 0 ? (
+                        microphones.map((mic) => (
+                          <option key={mic.deviceId} value={mic.deviceId} className="dark:bg-secondary">
+                            {mic.label || `Microphone ${mic.deviceId.substring(0, 5)}`}
+                          </option>
+                        ))
+                      ) : (
+                        <option value="" className="dark:bg-secondary">No microphone detected</option>
+                      )}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-border-primary/65 text-sm bg-white dark:bg-input text-secondary dark:text-offwhite">
                 <span className="font-bold text-xs uppercase tracking-wider font-[Outfit] text-secondary/50 dark:text-offwhite/40">Room Code</span>
                 <code className="flex-1 font-mono text-sm text-brand font-bold text-center">{roomId}</code>
                 <button 

@@ -15,7 +15,7 @@ const ParticipantPanel = ({ remoteUsers = [], participantNames = {}, onClose }) 
   };
 
   return (
-    <div className="w-80 bg-tertiary/95 backdrop-blur-xl border-l border-border-primary/60 flex flex-col shrink-0 animate-[fade-in_0.25s_ease-out]">
+    <div className="fixed md:static top-14 bottom-0 right-0 z-30 w-full md:w-80 bg-tertiary/95 backdrop-blur-xl border-l border-border-primary/60 flex flex-col shrink-0 animate-[fade-in_0.25s_ease-out]">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border-primary/60">
         <h3 className="text-sm font-semibold text-white font-[Outfit] tracking-wide">
@@ -45,7 +45,8 @@ const ParticipantPanel = ({ remoteUsers = [], participantNames = {}, onClose }) 
         </div>
 
         {/* Remote users */}
-        {remoteUsers.map((remoteUser) => {
+        {remoteUsers && remoteUsers.map((remoteUser) => {
+          if (!remoteUser || !remoteUser.uid) return null;
           const uid = remoteUser.uid;
           const remoteName = getRemoteUserName(uid);
           return (

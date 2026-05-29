@@ -10,16 +10,36 @@ const VideoTile = ({ track, isLocal, user, name, videoActive, audioActive }) => 
 
     if (isLocal) {
       if (track && videoActive) {
-        track.play(container);
+        try {
+          track.play(container);
+        } catch (err) {
+          console.error("Error playing local video track:", err);
+        }
         return () => {
-          track.stop();
+          if (track) {
+            try {
+              track.stop();
+            } catch (err) {
+              console.error("Error stopping local video track during cleanup:", err);
+            }
+          }
         };
       }
     } else {
       if (user && user.videoTrack && videoActive) {
-        user.videoTrack.play(container);
+        try {
+          user.videoTrack.play(container);
+        } catch (err) {
+          console.error("Error playing remote video track:", err);
+        }
         return () => {
-          user.videoTrack.stop();
+          if (user && user.videoTrack) {
+            try {
+              user.videoTrack.stop();
+            } catch (err) {
+              console.error("Error stopping remote video track during cleanup:", err);
+            }
+          }
         };
       }
     }

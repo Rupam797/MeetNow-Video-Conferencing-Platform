@@ -32,7 +32,7 @@ const MeetingRoomPage = () => {
   const [loading, setLoading] = useState(true);
 
   // Read initial device states from lobby redirect
-  const { initialMic = true, initialCamera = true } = location.state || {};
+  const { initialMic = true, initialCamera = true, selectedCameraId = null, selectedMicId = null } = location.state || {};
 
   useEffect(() => {
     const fetchToken = async () => {
@@ -79,6 +79,8 @@ const MeetingRoomPage = () => {
         user={user}
         initialMic={initialMic}
         initialCamera={initialCamera}
+        selectedCameraId={selectedCameraId}
+        selectedMicId={selectedMicId}
         navigate={navigate}
       />
     </AgoraRTCProvider>
@@ -94,6 +96,8 @@ const MeetingRoomInner = ({
   user, 
   initialMic, 
   initialCamera, 
+  selectedCameraId,
+  selectedMicId,
   navigate 
 }) => {
   const [micActive, setMicActive] = useState(initialMic);
@@ -151,7 +155,8 @@ const MeetingRoomInner = ({
 
   // Helper to get display name for a remote user
   const getRemoteUserName = (remoteUid) => {
-    return participantNames[String(remoteUid)] || `Participant ${remoteUid}`;
+    if (!remoteUid) return 'Participant';
+    return (participantNames && participantNames[String(remoteUid)]) || `Participant ${remoteUid}`;
   };
 
   // 1. Join the Agora RTC Channel
@@ -166,11 +171,20 @@ const MeetingRoomInner = ({
   );
 
   // 2. Initialize local mic and camera tracks
-  const { localMicrophoneTrack } = useLocalMicrophoneTrack(micActive);
-  const { localCameraTrack } = useLocalCameraTrack(cameraActive);
+  const { localMicrophoneTrack } = useLocalMicrophoneTrack(
+    micActive,
+    selectedMicId ? { microphoneId: selectedMicId } : undefined
+  );
+  const { localCameraTrack } = useLocalCameraTrack(
+    cameraActive,
+    selectedCameraId ? { cameraId: selectedCameraId } : undefined
+  );
 
   // 3. Publish local video/audio tracks
-  usePublish([localMicrophoneTrack, localCameraTrack]);
+  const tracksToPublish = [];
+  if (localMicrophoneTrack) tracksToPublish.push(localMicrophoneTrack);
+  if (localCameraTrack) tracksToPublish.push(localCameraTrack);
+  usePublish(tracksToPublish);
 
   // 4. Retrieve remote users in the channel and subscribe to their tracks
   const remoteUsers = useRemoteUsers();
@@ -179,16 +193,26 @@ const MeetingRoomInner = ({
 
   // Re-fetch participant names when remote users list changes (new user joined/left)
   useEffect(() => {
-    fetchParticipantNames();
-  }, [remoteUsers.length, fetchParticipantNames]);
+    if (remoteUsers) {
+      fetchParticipantNames();
+    }
+  }, [remoteUsers?.length, fetchParticipantNames]);
 
   // 5. Play remote users' audio automatically
   useEffect(() => {
-    audioTracks.forEach((track) => {
-      if (track && !track.isPlaying) {
-        track.play();
-      }
-    });
+    if (audioTracks) {
+      audioTracks.forEach((track) => {
+        if (track) {
+          try {
+            if (!track.isPlaying) {
+              track.play();
+            }
+          } catch (err) {
+            console.error('Failed to play remote audio track:', err);
+          }
+        }
+      });
+    }
   }, [audioTracks]);
 
   // 6. Handle device activation changes
@@ -285,38 +309,39 @@ const MeetingRoomInner = ({
   };
 
   // Determine grid layout
-  const totalTiles = remoteUsers.length + 1;
+  const totalTiles = (remoteUsers?.length || 0) + 1;
   const getGridCols = () => {
     if (totalTiles === 1) return 'grid-cols-1';
-    if (totalTiles === 2) return 'grid-cols-2';
-    if (totalTiles <= 4) return 'grid-cols-2';
-    return 'grid-cols-3';
+    if (totalTiles === 2) return 'grid-cols-1 md:grid-cols-2';
+    if (totalTiles === 3) return 'grid-cols-1 md:grid-cols-2';
+    if (totalTiles === 4) return 'grid-cols-2';
+    return 'grid-cols-2 md:grid-cols-3';
   };
 
   return (
     <div className="h-screen w-screen flex flex-col bg-tertiary overflow-hidden font-[Outfit]">
       
       {/* ── Topbar ── */}
-      <header className="flex items-center justify-between px-4 h-14 bg-secondary/80 backdrop-blur-xl border-b border-border-primary/45 shrink-0 z-20">
+      <header className="flex items-center justify-between px-3 sm:px-4 h-14 bg-secondary/80 backdrop-blur-xl border-b border-border-primary/45 shrink-0 z-20">
         {/* Left side — Back + Meeting info */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
           {/* Back button */}
           <button 
             onClick={() => navigate('/dashboard')}
-            className="w-9 h-9 rounded-full bg-surface hover:bg-surface-hover flex items-center justify-center text-offwhite transition-all duration-150 cursor-pointer"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-surface hover:bg-surface-hover flex items-center justify-center text-offwhite transition-all duration-150 cursor-pointer shrink-0"
           >
             <ArrowLeft size={16} />
           </button>
           
           {/* Meeting title pill */}
-          <div className="flex items-center gap-2.5 px-4 py-1.5 bg-surface/60 rounded-full border border-border-primary/40">
-            <div className="w-2 h-2 rounded-full bg-brand animate-pulse" />
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold text-white leading-tight">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 px-2.5 sm:px-4 py-1.5 bg-surface/60 rounded-full border border-border-primary/40 min-w-0">
+            <div className="w-2 h-2 rounded-full bg-brand animate-pulse shrink-0" />
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs sm:text-sm font-semibold text-white leading-tight truncate">
                 Team Meeting
               </span>
-              <span className="text-[10px] text-offwhite/50 leading-tight">
-                Host <span className="text-brand">{user?.name || 'You'}</span>
+              <span className="text-[9px] sm:text-[10px] text-offwhite/50 leading-tight truncate">
+                Host <span className="text-brand font-medium">{user?.name || 'You'}</span>
               </span>
             </div>
           </div>
@@ -324,7 +349,7 @@ const MeetingRoomInner = ({
           {/* Share button */}
           <button 
             onClick={copyRoomLink}
-            className="w-9 h-9 rounded-full bg-brand text-secondary flex items-center justify-center hover:bg-brand-hover transition-all duration-150 active:scale-95 shadow-md shadow-brand/20 cursor-pointer"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-brand text-secondary flex items-center justify-center hover:bg-brand-hover transition-all duration-150 active:scale-95 shadow-md shadow-brand/20 cursor-pointer shrink-0"
             title="Copy Invite Link"
           >
             <Share2 size={14} />
@@ -332,14 +357,14 @@ const MeetingRoomInner = ({
         </div>
 
         {/* Right side — User avatar + menu */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <span className="text-xs text-offwhite/50 hidden sm:inline mr-1">
             {user?.name || 'Guest'}
           </span>
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand to-brand-hover text-secondary text-xs font-bold shadow-md shadow-brand/25">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-brand to-brand-hover text-secondary text-xs flex items-center justify-center font-bold shadow-md shadow-brand/25">
             {user?.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : 'U'}
           </div>
-          <button className="w-9 h-9 rounded-full bg-surface hover:bg-surface-hover flex items-center justify-center text-offwhite transition-all duration-150 cursor-pointer">
+          <button className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-surface hover:bg-surface-hover flex items-center justify-center text-offwhite transition-all duration-150 cursor-pointer">
             <Menu size={16} />
           </button>
         </div>
@@ -360,15 +385,17 @@ const MeetingRoomInner = ({
             />
 
             {/* Remote participants video tiles */}
-            {remoteUsers.map((remoteUser) => (
-              <VideoTile
-                key={remoteUser.uid}
-                user={remoteUser}
-                isLocal={false}
-                name={getRemoteUserName(remoteUser.uid)}
-                videoActive={remoteUser.hasVideo}
-                audioActive={remoteUser.hasAudio}
-              />
+            {remoteUsers && remoteUsers.map((remoteUser) => (
+              remoteUser && remoteUser.uid ? (
+                <VideoTile
+                  key={remoteUser.uid}
+                  user={remoteUser}
+                  isLocal={false}
+                  name={getRemoteUserName(remoteUser.uid)}
+                  videoActive={remoteUser.hasVideo}
+                  audioActive={remoteUser.hasAudio}
+                />
+              ) : null
             ))}
           </div>
         </div>
