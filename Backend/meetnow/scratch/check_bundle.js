@@ -1,7 +1,7 @@
 async function checkDeployment() {
   try {
     // 1. Fetch index HTML to get the latest JS bundle filename
-    const htmlResponse = await fetch('https://meet-now-video-conferencing-platfor.vercel.app/signup');
+    const htmlResponse = await fetch('https://www.vidor.me/signup');
     const htmlText = await htmlResponse.text();
     
     // Extract script src
@@ -12,7 +12,7 @@ async function checkDeployment() {
     }
     
     const jsPath = match[1];
-    const jsUrl = `https://meet-now-video-conferencing-platfor.vercel.app${jsPath}`;
+    const jsUrl = `https://www.vidor.me${jsPath}`;
     console.log('Latest JS bundle URL:', jsUrl);
     
     // 2. Fetch the JS bundle
