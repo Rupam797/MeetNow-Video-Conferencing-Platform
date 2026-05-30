@@ -117,7 +117,7 @@ const AdminDashboardPage = () => {
       const response = await api.post('/api/meetings/create', {
         roomId: code,
         roomName: `Admin Quick Room`,
-        createdBy: user?.email || 'admin@meetnow.com'
+        createdBy: user?.email || 'admin@vidor.com'
       });
       if (response.data.roomId) {
         toast.success('Quick meeting room created.');

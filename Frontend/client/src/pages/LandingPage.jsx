@@ -19,7 +19,7 @@ const LandingPage = () => {
   const testimonials = [
     {
       stars: 5,
-      quote: "I used to dread Monday meetings. Now, I actually look forward to them. MeetNow makes every second feel worth attending.",
+      quote: "I used to dread Monday meetings. Now, I actually look forward to them. Vidor makes every second feel worth attending.",
       author: "Kevin Park",
       role: "Senior Project Manager at Veloce",
       initials: "KP"
@@ -131,7 +131,7 @@ const LandingPage = () => {
             variants={itemVariants}
             className="text-theme-lightgray max-w-xl text-base md:text-lg mb-8 leading-relaxed font-light"
           >
-            MeetNow transforms every meeting with real-time AI – live transcription, sentiment detection, smart summaries, and intelligent noise cancellation.
+            Vidor transforms every meeting with real-time AI – live transcription, sentiment detection, smart summaries, and intelligent noise cancellation.
           </motion.p>
 
           {/* Call to Actions */}
@@ -185,7 +185,7 @@ const LandingPage = () => {
                 <div className="w-3 h-3 rounded-full bg-theme-lime"></div>
               </div>
               <div className="text-[11px] text-theme-lightgray/60 font-mono bg-theme-charcoal/50 px-3 py-1 rounded-md border border-theme-lightgray/5">
-                meet.now/demo-room-923
+                vidor.com/demo-room-923
               </div>
               <div className="w-14"></div>
             </div>
@@ -317,7 +317,7 @@ const LandingPage = () => {
         className="py-20 px-6 max-w-4xl mx-auto text-center border-b border-theme-lightgray/30"
       >
         <h2 className="font-[Outfit] text-2xl md:text-4xl font-extrabold leading-normal text-theme-charcoal">
-          <span className="text-theme-olive font-serif">MeetNow</span> — transforms every meeting with real-time AI — <span className="text-theme-olive bg-theme-lime/30 px-2 py-0.5 rounded">live transcription</span>, sentiment detection, smart summaries, and intelligent noise cancellation. Your meetings, reimagined.
+          <span className="text-theme-olive font-serif">Vidor</span> — transforms every meeting with real-time AI — <span className="text-theme-olive bg-theme-lime/30 px-2 py-0.5 rounded">live transcription</span>, sentiment detection, smart summaries, and intelligent noise cancellation. Your meetings, reimagined.
         </h2>
       </motion.section>
 
@@ -624,7 +624,7 @@ const LandingPage = () => {
                     <Calendar size={18} />
                   </div>
                   <div>
-                    <div className="text-[10px] uppercase font-bold text-theme-lime tracking-widest leading-none mb-1">MeetNow Day 30</div>
+                    <div className="text-[10px] uppercase font-bold text-theme-lime tracking-widest leading-none mb-1">Vidor Day 30</div>
                     <div className="text-xs text-theme-white/90 font-medium font-[Outfit]">Annual Board Meeting</div>
                   </div>
                 </motion.div>
@@ -991,7 +991,7 @@ const LandingPage = () => {
           </div>
 
           <h2 className="font-[Outfit] text-3xl md:text-5xl font-extrabold max-w-3xl leading-tight mb-6 z-10">
-            Join 50,000+ teams already using MeetNow — starting today.
+            Join 50,000+ teams already using Vidor — starting today.
           </h2>
 
           <div className="z-10">
@@ -1044,10 +1044,10 @@ const LandingPage = () => {
                   <div className="w-8 h-8 bg-theme-lime rounded-xl flex items-center justify-center text-theme-charcoal shadow-sm">
                     <Video size={18} />
                   </div>
-                  <span className="font-[Outfit] tracking-tight">MeetNow</span>
+                  <span className="font-[Outfit] tracking-tight">Vidor</span>
                 </div>
                 <p className="text-[10px] text-theme-lightgray/40">
-                  © 2026 MeetNow. All rights reserved.
+                  © 2026 Vidor. All rights reserved.
                 </p>
               </div>
             </div>

@@ -58,7 +58,7 @@ const Navbar = () => {
           <div className={brandIconContainerClass}>
             <Video size={18} />
           </div>
-          <span className="font-[Outfit] tracking-tight text-lg">MeetNow</span>
+          <span className="font-[Outfit] tracking-tight text-lg">Vidor</span>
         </Link>
 
         {/* Center Links (Only on Landing Page) */}

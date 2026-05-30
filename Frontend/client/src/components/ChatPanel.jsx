@@ -7,7 +7,7 @@ const ChatPanel = ({ onClose }) => {
   const [messages, setMessages] = useState([
     {
       id: 1,
-      sender: 'MeetNow Bot',
+      sender: 'Vidor Bot',
       content: 'Welcome to the meeting! Share the link or Room ID with others so they can join you.',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       isOwn: false,
@@ -53,7 +53,7 @@ const ChatPanel = ({ onClose }) => {
         ...prev,
         {
           id: Date.now() + 1,
-          sender: 'MeetNow Bot',
+          sender: 'Vidor Bot',
           content: randomResponse,
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           isOwn: false,

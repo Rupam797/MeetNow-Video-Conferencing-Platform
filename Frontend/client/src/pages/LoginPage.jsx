@@ -33,7 +33,7 @@ const LoginPage = () => {
 
   const handleDemoLogin = async () => {
     setIsLoading(true);
-    const result = await login('demo@meetnow.com', 'demo1234');
+    const result = await login('demo@vidor.com', 'demo1234');
     setIsLoading(false);
 
     if (result.success) {
@@ -58,7 +58,7 @@ const LoginPage = () => {
           <div className="w-9 h-9 bg-brand text-secondary rounded-xl flex items-center justify-center shadow-md">
             <Video size={18} />
           </div>
-          <span className="text-xl font-bold font-[Outfit] text-white tracking-tight">MeetNow</span>
+          <span className="text-xl font-bold font-[Outfit] text-white tracking-tight">Vidor</span>
         </Link>
 
         {/* Hero Area */}
@@ -89,7 +89,7 @@ const LoginPage = () => {
 
         {/* Footer */}
         <div className="text-xs text-offwhite/40 font-[Outfit]">
-          &copy; 2026 MeetNow. All rights reserved. Built using Agora RTC SDK.
+          &copy; 2026 Vidor. All rights reserved. Built using Agora RTC SDK.
         </div>
       </div>
 
@@ -101,7 +101,7 @@ const LoginPage = () => {
             <div className="w-8 h-8 bg-primary dark:bg-brand text-brand dark:text-primary rounded-xl flex items-center justify-center shadow-md">
               <Video size={18} />
             </div>
-            <span className="text-base font-bold font-[Outfit]">MeetNow</span>
+            <span className="text-base font-bold font-[Outfit]">Vidor</span>
           </Link>
 
           <div className="mb-6 text-center md:text-left">
