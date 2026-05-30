@@ -75,7 +75,7 @@ const LobbyPage = () => {
             deviceId: selectedCameraId ? { exact: selectedCameraId } : undefined,
             width: 640, 
             height: 480, 
-            facingMode: 'user' 
+            ...(selectedCameraId ? {} : { facingMode: 'user' })
           } : false,
           audio: micActive ? (selectedMicId ? { deviceId: { exact: selectedMicId } } : true) : false
         };

@@ -246,8 +246,21 @@ const MeetingRoomInner = ({
   );
   const { localCameraTrack } = useLocalCameraTrack(
     cameraActive,
-    activeCameraId ? { cameraId: activeCameraId } : undefined
+    selectedCameraId ? { cameraId: selectedCameraId } : undefined
   );
+
+  // Dynamic camera device switching via Agora setDevice API
+  useEffect(() => {
+    if (localCameraTrack && activeCameraId) {
+      localCameraTrack.setDevice(activeCameraId)
+        .then(() => {
+          console.log('Successfully switched Agora camera to device:', activeCameraId);
+        })
+        .catch(err => {
+          console.error('Failed to set camera device in Agora:', err);
+        });
+    }
+  }, [activeCameraId, localCameraTrack]);
 
   // 3. Publish local video/audio tracks
   const tracksToPublish = [];
