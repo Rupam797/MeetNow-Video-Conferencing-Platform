@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
-import { MicOff, User } from 'lucide-react';
+import { MicOff, User, RefreshCw } from 'lucide-react';
 
-const VideoTile = ({ track, isLocal, user, name, videoActive, audioActive }) => {
+const VideoTile = ({ track, isLocal, user, name, videoActive, audioActive, onFlipCamera }) => {
   const videoRef = useRef(null);
 
   useEffect(() => {
@@ -91,6 +91,20 @@ const VideoTile = ({ track, isLocal, user, name, videoActive, audioActive }) => 
       {/* Active speaking indicator — brand ring */}
       {audioActive && (
         <div className="absolute top-2.5 right-2.5 w-3 h-3 rounded-full bg-brand shadow-lg shadow-brand/40 z-10 animate-pulse" />
+      )}
+
+      {/* Camera Flip Button (overlaid at top-left) */}
+      {isLocal && videoActive && onFlipCamera && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onFlipCamera();
+          }}
+          className="absolute top-2.5 left-2.5 w-8 h-8 rounded-full bg-black/60 hover:bg-black/80 border border-white/20 text-white flex items-center justify-center shadow-lg transition-all duration-150 active:scale-90 cursor-pointer z-20"
+          title="Switch Camera"
+        >
+          <RefreshCw size={14} />
+        </button>
       )}
     </div>
   );

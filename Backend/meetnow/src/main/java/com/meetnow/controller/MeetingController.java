@@ -9,9 +9,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.CurrentSecurityContext;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.time.Instant;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/meetings")
@@ -23,6 +24,39 @@ public class MeetingController {
 
     // In-memory participant name registry: channelName -> (uid -> name)
     private static final ConcurrentHashMap<String, ConcurrentHashMap<String, String>> participantRegistry = new ConcurrentHashMap<>();
+
+    // ── Admission Queue ──
+    // requestId -> AdmissionRequest
+    private static final ConcurrentHashMap<String, AdmissionRequest> admissionQueue = new ConcurrentHashMap<>();
+
+    private static class AdmissionRequest {
+        String requestId;
+        String channelName;
+        String name;
+        String email;
+        String status; // PENDING, ACCEPTED, DENIED
+        Instant createdAt;
+
+        AdmissionRequest(String requestId, String channelName, String name, String email) {
+            this.requestId = requestId;
+            this.channelName = channelName;
+            this.name = name;
+            this.email = email;
+            this.status = "PENDING";
+            this.createdAt = Instant.now();
+        }
+
+        Map<String, Object> toMap() {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("requestId", requestId);
+            map.put("channelName", channelName);
+            map.put("name", name);
+            map.put("email", email);
+            map.put("status", status);
+            map.put("createdAt", createdAt.toString());
+            return map;
+        }
+    }
 
     /**
      * POST /api/meetings/create — Create a new meeting room (authenticated)
@@ -66,11 +100,18 @@ public class MeetingController {
 
     /**
      * GET /api/meetings/validate/{roomId} — Check if a room exists (public)
+     * Now also returns the creator email so the frontend can identify the host.
      */
     @GetMapping("/validate/{roomId}")
     public ResponseEntity<?> validateRoom(@PathVariable String roomId) {
-        if (meetingRoomRepository.findByRoomId(roomId).isPresent()) {
-            return ResponseEntity.ok(Map.of("message", "Room is valid", "roomId", roomId));
+        Optional<MeetingRoom> roomOpt = meetingRoomRepository.findByRoomId(roomId);
+        if (roomOpt.isPresent()) {
+            MeetingRoom room = roomOpt.get();
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("message", "Room is valid");
+            response.put("roomId", roomId);
+            response.put("createdBy", room.getCreatedBy());
+            return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("error", true, "message", "Room not found or invalid link"));
@@ -143,4 +184,105 @@ public class MeetingController {
 
         return ResponseEntity.ok(Map.of("message", "Participant unregistered"));
     }
+
+    // ═══════════════════════════════════════════════════
+    // ── Admission Control Endpoints ──
+    // ═══════════════════════════════════════════════════
+
+    /**
+     * POST /api/meetings/admission/request — Joiner submits an admission request
+     * Body: { channelName, name, email }
+     * Returns: { requestId, status }
+     */
+    @PostMapping("/admission/request")
+    public ResponseEntity<?> requestAdmission(@RequestBody Map<String, String> request) {
+        String channelName = request.get("channelName");
+        String name = request.get("name");
+        String email = request.get("email");
+
+        if (channelName == null || name == null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", true, "message", "channelName and name are required"));
+        }
+
+        String requestId = UUID.randomUUID().toString();
+        AdmissionRequest admissionRequest = new AdmissionRequest(requestId, channelName, name, email != null ? email : "");
+        admissionQueue.put(requestId, admissionRequest);
+
+        Map<String, String> response = new LinkedHashMap<>();
+        response.put("requestId", requestId);
+        response.put("status", "PENDING");
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * GET /api/meetings/admission/status/{requestId} — Joiner polls their admission status
+     * Returns: { requestId, status }  (PENDING / ACCEPTED / DENIED)
+     */
+    @GetMapping("/admission/status/{requestId}")
+    public ResponseEntity<?> getAdmissionStatus(@PathVariable String requestId) {
+        AdmissionRequest req = admissionQueue.get(requestId);
+        if (req == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", true, "message", "Admission request not found"));
+        }
+
+        Map<String, String> response = new LinkedHashMap<>();
+        response.put("requestId", req.requestId);
+        response.put("status", req.status);
+
+        // Clean up accepted/denied requests after they've been read
+        if ("ACCEPTED".equals(req.status) || "DENIED".equals(req.status)) {
+            admissionQueue.remove(requestId);
+        }
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * GET /api/meetings/admission/pending/{channelName} — Host polls for pending requests
+     * Returns: list of pending admission requests for the given channel
+     */
+    @GetMapping("/admission/pending/{channelName}")
+    public ResponseEntity<?> getPendingAdmissions(@PathVariable String channelName) {
+        List<Map<String, Object>> pendingList = admissionQueue.values().stream()
+                .filter(req -> channelName.equals(req.channelName) && "PENDING".equals(req.status))
+                .map(AdmissionRequest::toMap)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(pendingList);
+    }
+
+    /**
+     * POST /api/meetings/admission/respond — Host accepts or denies a request
+     * Body: { requestId, action }  where action = "ACCEPT" or "DENY"
+     */
+    @PostMapping("/admission/respond")
+    public ResponseEntity<?> respondToAdmission(@RequestBody Map<String, String> request) {
+        String requestId = request.get("requestId");
+        String action = request.get("action");
+
+        if (requestId == null || action == null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", true, "message", "requestId and action are required"));
+        }
+
+        AdmissionRequest req = admissionQueue.get(requestId);
+        if (req == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", true, "message", "Admission request not found"));
+        }
+
+        if ("ACCEPT".equalsIgnoreCase(action)) {
+            req.status = "ACCEPTED";
+        } else if ("DENY".equalsIgnoreCase(action)) {
+            req.status = "DENIED";
+        } else {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", true, "message", "Invalid action. Use ACCEPT or DENY."));
+        }
+
+        return ResponseEntity.ok(Map.of("message", "Response recorded", "status", req.status));
+    }
 }
+

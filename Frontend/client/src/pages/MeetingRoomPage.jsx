@@ -6,8 +6,9 @@ import VideoTile from '../components/VideoTile';
 import ControlBar from '../components/ControlBar';
 import ChatPanel from '../components/ChatPanel';
 import ParticipantPanel from '../components/ParticipantPanel';
+import AdmissionRequestPanel from '../components/AdmissionRequestPanel';
 import { toast } from 'react-toastify';
-import { Clipboard, Video as VideoIcon, ArrowLeft, Share2, Menu } from 'lucide-react';
+import { Clipboard, Video as VideoIcon, ArrowLeft, Share2, Menu, RefreshCw } from 'lucide-react';
 import AgoraRTC, {
   AgoraRTCProvider,
   useJoin,
@@ -29,6 +30,7 @@ const MeetingRoomPage = () => {
 
   const [token, setToken] = useState(null);
   const [uid, setUid] = useState(null);
+  const [createdBy, setCreatedBy] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Read initial device states from lobby redirect
@@ -38,6 +40,10 @@ const MeetingRoomPage = () => {
     const fetchToken = async () => {
       const randomUid = Math.floor(Math.random() * 100000) + 1;
       try {
+        // Retrieve room details / validate to check createdBy
+        const valRes = await api.get(`/api/meetings/validate/${roomId}`);
+        setCreatedBy(valRes.data.createdBy || null);
+
         const response = await api.get('/api/meetings/token', {
           params: {
             channelName: roomId,
@@ -49,8 +55,8 @@ const MeetingRoomPage = () => {
         setUid(randomUid);
         setLoading(false);
       } catch (err) {
-        console.error('Failed to get Agora token:', err);
-        toast.error('Failed to authenticate meeting session. Redirecting...');
+        console.error('Failed to initialize meeting room:', err);
+        toast.error('Failed to validate meeting room. Redirecting...');
         navigate('/dashboard');
       }
     };
@@ -81,6 +87,7 @@ const MeetingRoomPage = () => {
         initialCamera={initialCamera}
         selectedCameraId={selectedCameraId}
         selectedMicId={selectedMicId}
+        createdBy={createdBy}
         navigate={navigate}
       />
     </AgoraRTCProvider>
@@ -98,6 +105,7 @@ const MeetingRoomInner = ({
   initialCamera, 
   selectedCameraId,
   selectedMicId,
+  createdBy,
   navigate 
 }) => {
   const [micActive, setMicActive] = useState(initialMic);
@@ -111,6 +119,67 @@ const MeetingRoomInner = ({
   // Participant name registry: uid -> name
   const [participantNames, setParticipantNames] = useState({});
   const pollIntervalRef = useRef(null);
+
+  // Admission control state
+  const isHost = user?.email && createdBy && user.email === createdBy;
+  const [admissionRequests, setAdmissionRequests] = useState([]);
+  const admissionPollIntervalRef = useRef(null);
+
+  // Active Camera ID state and flip handler
+  const [activeCameraId, setActiveCameraId] = useState(selectedCameraId);
+
+  const handleFlipCamera = async () => {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(device => device.kind === 'videoinput');
+      
+      if (videoDevices.length <= 1) {
+        toast.info('No other camera detected to switch to.');
+        return;
+      }
+      
+      let currentIndex = videoDevices.findIndex(d => d.deviceId === activeCameraId);
+      if (currentIndex === -1) {
+        currentIndex = 0;
+      }
+      
+      const nextIndex = (currentIndex + 1) % videoDevices.length;
+      const nextCamera = videoDevices[nextIndex];
+      
+      setActiveCameraId(nextCamera.deviceId);
+      toast.info(`Switched camera to: ${nextCamera.label || 'Next camera'}`);
+    } catch (err) {
+      console.error('Failed to flip camera:', err);
+      toast.error('Failed to switch camera.');
+    }
+  };
+
+  // Poll for pending admission requests if host
+  useEffect(() => {
+    if (!isHost) return;
+
+    const fetchPendingAdmissions = async () => {
+      try {
+        const response = await api.get(`/api/meetings/admission/pending/${roomId}`);
+        setAdmissionRequests(response.data || []);
+      } catch (err) {
+        console.error('Failed to fetch pending admissions:', err);
+      }
+    };
+
+    fetchPendingAdmissions();
+    admissionPollIntervalRef.current = setInterval(fetchPendingAdmissions, 3000);
+
+    return () => {
+      if (admissionPollIntervalRef.current) {
+        clearInterval(admissionPollIntervalRef.current);
+      }
+    };
+  }, [isHost, roomId]);
+
+  const handleAdmissionResponded = (requestId) => {
+    setAdmissionRequests(prev => prev.filter(req => req.requestId !== requestId));
+  };
 
   // Register local user's name when joining
   useEffect(() => {
@@ -177,7 +246,7 @@ const MeetingRoomInner = ({
   );
   const { localCameraTrack } = useLocalCameraTrack(
     cameraActive,
-    selectedCameraId ? { cameraId: selectedCameraId } : undefined
+    activeCameraId ? { cameraId: activeCameraId } : undefined
   );
 
   // 3. Publish local video/audio tracks
@@ -294,6 +363,10 @@ const MeetingRoomInner = ({
       clearInterval(pollIntervalRef.current);
     }
 
+    if (admissionPollIntervalRef.current) {
+      clearInterval(admissionPollIntervalRef.current);
+    }
+
     if (screenTrack) {
       screenTrack.close();
     }
@@ -382,6 +455,7 @@ const MeetingRoomInner = ({
               name={`${user?.name || 'You'}${screenShareActive ? ' (Screen)' : ''}`}
               videoActive={screenShareActive ? true : cameraActive}
               audioActive={micActive}
+              onFlipCamera={handleFlipCamera}
             />
 
             {/* Remote participants video tiles */}
@@ -434,6 +508,13 @@ const MeetingRoomInner = ({
         }}
         onLeave={handleLeave}
       />
+
+      {isHost && (
+        <AdmissionRequestPanel 
+          admissionRequests={admissionRequests}
+          onResponded={handleAdmissionResponded}
+        />
+      )}
     </div>
   );
 };
