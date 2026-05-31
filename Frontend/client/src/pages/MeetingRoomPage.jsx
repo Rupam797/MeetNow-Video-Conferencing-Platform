@@ -489,7 +489,7 @@ const MeetingRoomInner = ({
 
         {/* Side Panels */}
         {chatOpen && (
-          <ChatPanel onClose={() => setChatOpen(false)} />
+          <ChatPanel roomId={roomId} onClose={() => setChatOpen(false)} />
         )}
         
         {participantsOpen && (

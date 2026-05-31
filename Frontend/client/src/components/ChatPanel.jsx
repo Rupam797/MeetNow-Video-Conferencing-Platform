@@ -2,18 +2,47 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Send } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const ChatPanel = ({ onClose }) => {
+const getWebSocketUrl = (roomId) => {
+  let backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080/api/v1.0';
+  
+  // Clean up trailing slash
+  if (backendUrl.endsWith('/')) {
+    backendUrl = backendUrl.slice(0, -1);
+  }
+  
+  // Do NOT strip the context path (e.g. /api/v1.0) because Spring Boot's
+  // server.servlet.context-path applies to all WebSocket endpoints.
+  let wsUrl = backendUrl;
+  if (wsUrl.startsWith('https://')) {
+    wsUrl = wsUrl.replace('https://', 'wss://');
+  } else if (wsUrl.startsWith('http://')) {
+    wsUrl = wsUrl.replace('http://', 'ws://');
+  } else {
+    // Fallback to absolute URLs relative to browser window
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.host;
+    wsUrl = `${protocol}//${host}${backendUrl}`;
+  }
+  
+  return `${wsUrl}/ws/chat/${roomId}`;
+};
+
+const ChatPanel = ({ roomId, onClose }) => {
   const { user } = useAuth();
   const [messages, setMessages] = useState([
     {
-      id: 1,
+      id: 'welcome',
       sender: 'Vidor Bot',
-      content: 'Welcome to the meeting! Share the link or Room ID with others so they can join you.',
+      content: 'Welcome to the meeting room chat! Messages are ephemeral and will disappear when you leave.',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       isOwn: false,
     }
   ]);
   const [inputValue, setInputValue] = useState('');
+  const [connected, setConnected] = useState(false);
+  
+  const socketRef = useRef(null);
+  const reconnectTimeoutRef = useRef(null);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -24,51 +53,96 @@ const ChatPanel = ({ onClose }) => {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    if (!roomId) return;
+
+    let ws;
+    const connect = () => {
+      const wsUrl = getWebSocketUrl(roomId);
+      console.log('Connecting to chat WebSocket:', wsUrl);
+      ws = new WebSocket(wsUrl);
+      socketRef.current = ws;
+
+      ws.onopen = () => {
+        console.log('Chat WebSocket connected successfully');
+        setConnected(true);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          const receivedMsg = {
+            ...data,
+            isOwn: false,
+          };
+          setMessages((prev) => [...prev, receivedMsg]);
+        } catch (err) {
+          console.error('Failed to parse incoming WebSocket message:', err);
+        }
+      };
+
+      ws.onclose = (event) => {
+        console.log('Chat WebSocket disconnected. Code:', event.code);
+        setConnected(false);
+        // Reconnect if connection was closed abnormally
+        if (event.code !== 1000) {
+          console.log('Attempting to reconnect in 3 seconds...');
+          reconnectTimeoutRef.current = setTimeout(connect, 3000);
+        }
+      };
+
+      ws.onerror = (err) => {
+        console.error('Chat WebSocket error:', err);
+        setConnected(false);
+      };
+    };
+
+    connect();
+
+    return () => {
+      if (ws) {
+        ws.close(1000, 'Component unmounted');
+      }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+    };
+  }, [roomId]);
+
   const handleSend = (e) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
 
     const newMessage = {
       id: Date.now(),
-      sender: user?.name || 'You',
+      sender: user?.name || 'Guest',
       content: inputValue,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isOwn: true,
     };
 
-    setMessages((prev) => [...prev, newMessage]);
-    setInputValue('');
-
-    // Simulate an interactive bot response after 1.5 seconds to make the UI feel alive!
-    setTimeout(() => {
-      const responses = [
-        "Awesome! Hope you're enjoying the premium design.",
-        "Your audio and video signals are looking strong!",
-        "Tip: You can toggle your camera and microphone using the control bar below.",
-        "Need to invite others? Just copy the Room ID from the top left and send it over!",
-      ];
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-      
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now() + 1,
-          sender: 'Vidor Bot',
-          content: randomResponse,
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          isOwn: false,
-        }
-      ]);
-    }, 1500);
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify(newMessage));
+      setMessages((prev) => [...prev, { ...newMessage, isOwn: true }]);
+      setInputValue('');
+    } else {
+      console.warn('Cannot send message: WebSocket is disconnected.');
+    }
   };
 
   return (
     <div className="fixed md:static top-14 bottom-0 right-0 z-30 w-full md:w-80 bg-tertiary/95 backdrop-blur-xl border-l border-border-primary/60 flex flex-col shrink-0 animate-[fade-in_0.25s_ease-out]">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border-primary/60">
-        <h3 className="text-sm font-semibold text-white font-[Outfit] tracking-wide">
-          Meeting Chat
-        </h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-white font-[Outfit] tracking-wide">
+            Meeting Chat
+          </h3>
+          {/* Connection Status indicator */}
+          <div 
+            className={`w-2.5 h-2.5 rounded-full ${connected ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} 
+            title={connected ? 'Connected' : 'Disconnected, reconnecting...'}
+          />
+        </div>
         <button 
           onClick={onClose} 
           className="w-7 h-7 rounded-full flex items-center justify-center text-offwhite/60 hover:text-white hover:bg-surface-hover transition-all duration-150 cursor-pointer"
@@ -106,12 +180,14 @@ const ChatPanel = ({ onClose }) => {
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          placeholder="Send a message..."
-          className="flex-1 px-3 py-2 bg-input border border-border-primary/60 rounded-full text-sm text-white font-[Outfit] placeholder:text-offwhite/40 outline-none focus:border-brand/50 transition-colors duration-150"
+          disabled={!connected}
+          placeholder={connected ? "Send a message..." : "Connecting to chat..."}
+          className="flex-1 px-3 py-2 bg-input border border-border-primary/60 rounded-full text-sm text-white font-[Outfit] placeholder:text-offwhite/40 outline-none focus:border-brand/50 transition-colors duration-150 disabled:opacity-50"
         />
         <button 
           type="submit" 
-          className="w-9 h-9 rounded-full bg-brand text-secondary flex items-center justify-center hover:bg-brand-hover transition-all duration-150 active:scale-95 cursor-pointer shadow-md shadow-brand/20"
+          disabled={!connected || !inputValue.trim()}
+          className="w-9 h-9 rounded-full bg-brand text-secondary flex items-center justify-center hover:bg-brand-hover transition-all duration-150 active:scale-95 cursor-pointer shadow-md shadow-brand/20 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Send size={14} />
         </button>

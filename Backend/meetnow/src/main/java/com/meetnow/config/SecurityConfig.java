@@ -43,7 +43,8 @@ public class SecurityConfig {
                                 "/api/meetings/validate/**",
                                 "/api/meetings/token",
                                 "/api/meetings/participants/**",
-                                "/api/meetings/admission/**"
+                                "/api/meetings/admission/**",
+                                "/ws/chat/**"
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
